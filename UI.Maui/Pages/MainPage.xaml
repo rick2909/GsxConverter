@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UI.Maui.Pages.MainPage"
+             Title="GSX Converter">
+  <ContentPage.Content>
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" ColumnDefinitions="*" Padding="10" RowSpacing="8">
+      <HorizontalStackLayout Grid.Row="0" Spacing="8">
+        <Button Text="Open INI..." Clicked="OnOpenIniClicked" />
+        <Button Text="Convert" Clicked="OnConvertClicked" />
+      </HorizontalStackLayout>
+
+      <!-- Top: show the jetway_rootfloor_heights config (if present) -->
+      <StackLayout Grid.Row="1" Orientation="Vertical" Padding="0,4,0,4">
+        <Label Text="Config: [jetway_rootfloor_heights]" FontAttributes="Bold" />
+        <Editor x:Name="ConfigEditor" AutoSize="TextChanges" HeightRequest="80" IsReadOnly="True" />
+      </StackLayout>
+
+      <HorizontalStackLayout Grid.Row="2" Spacing="8" VerticalOptions="Center">
+        <Label Text="Output:" VerticalOptions="Center" />
+        <Entry x:Name="OutputPathEntry" HorizontalOptions="FillAndExpand" />
+      </HorizontalStackLayout>
+
+      <Grid Grid.Row="3" ColumnDefinitions="300,8,*">
+        <StackLayout Grid.Column="0">
+          <Label Text="Parsed Gates" FontAttributes="Bold" />
+          <CollectionView x:Name="GatesCollection" SelectionMode="None" HeightRequest="500">
+            <CollectionView.ItemTemplate>
+              <DataTemplate>
+                <Frame Padding="8" Margin="4" HasShadow="True">
+                  <StackLayout>
+                    <Label Text="{Binding GateId}" FontAttributes="Bold"/>
+                    <Label Text="{Binding Position.Latitude, StringFormat='Lat: {0:F6}'}" />
+                    <Label Text="{Binding Position.Longitude, StringFormat='Lon: {0:F6}'}" />
+                    <Label Text="{Binding Services.Count, StringFormat='Services: {0}'}" />
+                  </StackLayout>
+                </Frame>
+              </DataTemplate>
+            </CollectionView.ItemTemplate>
+          </CollectionView>
+        </StackLayout>
+
+        <BoxView Grid.Column="1" />
+
+        <StackLayout Grid.Column="2">
+          <Label Text="JSON Preview" FontAttributes="Bold" />
+          <Editor x:Name="JsonPreviewEditor" AutoSize="TextChanges" HeightRequest="500" IsReadOnly="True"/>
+        </StackLayout>
+      </Grid>
+
+      <Label Grid.Row="4" x:Name="StatusLabel" Text="Ready" />
+    </Grid>
+  </ContentPage.Content>
+</ContentPage>

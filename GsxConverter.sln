@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GsxConverter", "GsxConverter\GsxConverter.csproj", "{E56D60DC-AF8A-4D72-9EE0-FC8EB6DDDF1E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UI.Maui", "UI.Maui\UI.Maui.csproj", "{A110A576-424F-4821-BF43-1FA6F29C83A9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{E56D60DC-AF8A-4D72-9EE0-FC8EB6DDDF1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E56D60DC-AF8A-4D72-9EE0-FC8EB6DDDF1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E56D60DC-AF8A-4D72-9EE0-FC8EB6DDDF1E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A110A576-424F-4821-BF43-1FA6F29C83A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A110A576-424F-4821-BF43-1FA6F29C83A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A110A576-424F-4821-BF43-1FA6F29C83A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A110A576-424F-4821-BF43-1FA6F29C83A9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

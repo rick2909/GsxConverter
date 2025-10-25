@@ -17,7 +17,6 @@ namespace GsxConverter.Parsers;
 /// </summary>
 public class IniGsxParser
 {
-    private static readonly string[] GateSectionPrefixes = { "Gate", "Stand", "Parking" };
     private static readonly string[] ServiceSectionPrefixes = { "GndService", "Service" };
 
     // regex to capture "Gate", optional separator, and id
@@ -67,7 +66,7 @@ public class IniGsxParser
                 var svc = ParseServiceSection(svcId, section.Keys);
                 globalServices[svcId] = svc;
                 // Also store as metadata for traceability
-                cfg.Metadata[$"service.{svcId}.type"] = svc.Type ?? string.Empty;
+                cfg.Metadata[$"service.{svcId}.type"] = svc.Type;
             }
         }
 
@@ -76,23 +75,25 @@ public class IniGsxParser
         {
             string name = section.SectionName.Trim();
 
+            // Handle gate sections
             if (IsGateSection(name))
             {
                 var gate = ParseGateSection(name, section.Keys, globalServices);
                 cfg.Gates.Add(gate);
-            }
-            else if (IsServiceSection(name) || string.Equals(name, "jetway_rootfloor_heights", StringComparison.OrdinalIgnoreCase) || DeIceRegex.IsMatch(name))
-            {
-                // Already processed above
                 continue;
             }
-            else
+
+            // Skip sections already processed above (services, jetway config, deice)
+            if (IsServiceSection(name) || string.Equals(name, "jetway_rootfloor_heights", StringComparison.OrdinalIgnoreCase) || DeIceRegex.IsMatch(name))
             {
-                // unknown or top-level section -> flatten keys to metadata
-                foreach (var k in section.Keys)
-                {
-                    cfg.Metadata[$"{name}.{k.KeyName}"] = k.Value;
-                }
+                // intentionally skip
+                continue;
+            }
+
+            // unknown or top-level section -> flatten keys to metadata
+            foreach (var k in section.Keys)
+            {
+                cfg.Metadata[$"{name}.{k.KeyName}"] = k.Value;
             }
         }
 
@@ -166,19 +167,23 @@ public class IniGsxParser
         var gate = new GateDefinition { GateId = gateId };
 
         // Position
-        double lat = 0, lon = 0, heading = 0;
-        if (TryGet(keys, "lat", out var latS) && TryParseInvariant(latS, out lat)) gate.Position.Latitude = lat;
-        if (TryGet(keys, "lon", out var lonS) && TryParseInvariant(lonS, out lon)) gate.Position.Longitude = lon;
-        if (TryGet(keys, "heading", out var hS) && TryParseInvariant(hS, out heading)) gate.Position.Heading = heading;
+        double? lat = null, lon = null, heading = null;
+        if (TryGet(keys, "lat", out var latS) && TryParseInvariant(latS, out var latV)) lat = latV;
+        if (TryGet(keys, "lon", out var lonS) && TryParseInvariant(lonS, out var lonV)) lon = lonV;
+        if (TryGet(keys, "heading", out var hS) && TryParseInvariant(hS, out var headingV)) heading = headingV;
 
         // Some GSX files use spawn_lat/spawn_lon for the gate; map those if present and position was not set
-        if ((gate.Position.Latitude == 0 && gate.Position.Longitude == 0) &&
+        if ((!lat.HasValue && !lon.HasValue) &&
             (TryGet(keys, "spawn_lat", out var sl) || TryGet(keys, "spawn_latitude", out sl)))
         {
-            if (TryParseInvariant(sl, out lat)) gate.Position.Latitude = lat;
-            if (TryGet(keys, "spawn_lon", out var slon) && TryParseInvariant(slon, out lon)) gate.Position.Longitude = lon;
-            if (TryGet(keys, "spawn_heading", out var sh) && TryParseInvariant(sh, out heading)) gate.Position.Heading = heading;
+            if (TryParseInvariant(sl, out var spawnLat)) lat = spawnLat;
+            if (TryGet(keys, "spawn_lon", out var slon) && TryParseInvariant(slon, out var spawnLon)) lon = spawnLon;
+            if (TryGet(keys, "spawn_heading", out var sh) && TryParseInvariant(sh, out var spawnHeading)) heading = spawnHeading;
         }
+
+        if (lat.HasValue) gate.Position.Latitude = lat.Value;
+        if (lon.HasValue) gate.Position.Longitude = lon.Value;
+        if (heading.HasValue) gate.Position.Heading = heading.Value;
 
         // Tags and lists
         if (TryGet(keys, "tags", out var tagsS)) gate.Tags.AddRange(SplitList(tagsS));
