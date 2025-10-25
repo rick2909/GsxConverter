@@ -30,6 +30,10 @@ public class GateDefinition
 
     [JsonPropertyName("tags")]
     public List<string> Tags { get; set; } = new();
+        
+    // preserve arbitrary keys found in the section
+    [JsonPropertyName("properties")]
+    public Dictionary<string, string> Properties { get; set; } = new();
 }
 
 public class Position
