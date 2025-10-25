@@ -25,6 +25,10 @@ public class GroundServiceConfig
     // De-ice configurations as separate top-level objects (not embedded per-gate)
     [JsonPropertyName("deices")]
     public List<DeIceDefinition> DeIces { get; set; } = new();
+    
+    // Optional: groupings defined in the INI (GateGroups etc)
+    [JsonPropertyName("gate_groups")]
+    public List<GateGroup> GateGroups { get; set; } = new();
 }
 
 public class GateDefinition
@@ -44,6 +48,10 @@ public class GateDefinition
     // preserve arbitrary keys found in the section
     [JsonPropertyName("properties")]
     public Dictionary<string, string> Properties { get; set; } = new();
+    
+    // allowed aircraft templates (if present)
+    [JsonPropertyName("allowed_aircraft")]
+    public List<string> AllowedAircraft { get; set; } = new();
 }
 
 public class Position
@@ -85,6 +93,18 @@ public class DeIceDefinition
     public string? Type { get; set; }
 
     // numeric or string properties from the INI section preserved here
+    [JsonPropertyName("properties")]
+    public Dictionary<string, string> Properties { get; set; } = new();
+}
+
+public class GateGroup
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("members")]
+    public List<string> Members { get; set; } = new();
+
     [JsonPropertyName("properties")]
     public Dictionary<string, string> Properties { get; set; } = new();
 }

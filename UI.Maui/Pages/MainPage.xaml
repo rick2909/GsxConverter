@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:GsxConverter.Models;assembly=GsxConverter"
              x:Class="UI.Maui.Pages.MainPage"
              Title="GSX Converter">
   <ContentPage.Content>
@@ -26,15 +27,15 @@
           <Label Text="Parsed Gates" FontAttributes="Bold" />
           <CollectionView x:Name="GatesCollection" SelectionMode="None" HeightRequest="500">
             <CollectionView.ItemTemplate>
-              <DataTemplate>
-                <Frame Padding="8" Margin="4" HasShadow="True">
+              <DataTemplate x:DataType="models:GateDefinition">
+                <Border Padding="8" Margin="4">
                   <StackLayout>
                     <Label Text="{Binding GateId}" FontAttributes="Bold"/>
                     <Label Text="{Binding Position.Latitude, StringFormat='Lat: {0:F6}'}" />
                     <Label Text="{Binding Position.Longitude, StringFormat='Lon: {0:F6}'}" />
                     <Label Text="{Binding Services.Count, StringFormat='Services: {0}'}" />
                   </StackLayout>
-                </Frame>
+                </Border>
               </DataTemplate>
             </CollectionView.ItemTemplate>
           </CollectionView>

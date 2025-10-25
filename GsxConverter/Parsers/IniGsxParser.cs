@@ -1,8 +1,9 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using GsxConverter.Models;
-using IniParser;
-using IniParser.Model;
 
 namespace GsxConverter.Parsers;
 
@@ -18,19 +19,60 @@ namespace GsxConverter.Parsers;
 public class IniGsxParser
 {
     private static readonly string[] ServiceSectionPrefixes = { "GndService", "Service" };
-
-    // regex to capture "Gate", optional separator, and id
     private static readonly Regex GateRegex = new Regex(@"^(Gate|Stand|Parking)[\s_\-:]*(.+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-    // De-ice section names: starts with deice, de-ice, de_ice (case-insensitive)
     private static readonly Regex DeIceRegex = new Regex(@"^de[-_]?ice", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex GateGroupRegex = new Regex(@"^GateGroup[\s_\-:]*(.+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public GroundServiceConfig ParseFile(string path)
     {
         if (!File.Exists(path)) throw new FileNotFoundException(path);
 
-        var parser = new FileIniDataParser();
-        IniData data = parser.ReadFile(path);
+        // Read file and parse into lightweight SectionData objects to avoid requiring IniParser package
+        var lines = File.ReadAllLines(path);
+        var sections = new List<SectionData>();
+        SectionData? current = null;
+
+        foreach (var raw in lines)
+        {
+            var line = raw.Trim();
+            if (string.IsNullOrEmpty(line)) continue;
+            if (line.StartsWith(";") || line.StartsWith("#")) continue; // comment
+
+            if (line.StartsWith("[") && line.EndsWith("]"))
+            {
+                var sect = line.Substring(1, line.Length - 2).Trim();
+                current = new SectionData(sect, new KeyCollection());
+                sections.Add(current);
+                continue;
+            }
+
+            // key = value
+            var eq = line.IndexOf('=');
+            if (eq > 0 && current != null)
+            {
+                var key = line.Substring(0, eq).Trim();
+                var val = line.Substring(eq + 1).Trim();
+                // strip inline comments
+                var commentIdx = val.IndexOf(';');
+                if (commentIdx >= 0) val = val.Substring(0, commentIdx).Trim();
+                current.Keys.Add(key, val);
+            }
+            else
+            {
+                // lines outside sections -> store under a root section name
+                if (current == null)
+                {
+                    current = new SectionData(string.Empty, new KeyCollection());
+                    sections.Add(current);
+                }
+                if (eq > 0)
+                {
+                    var key = line.Substring(0, eq).Trim();
+                    var val = line.Substring(eq + 1).Trim();
+                    current.Keys.Add(key, val);
+                }
+            }
+        }
 
         var cfg = new GroundServiceConfig
         {
@@ -40,8 +82,8 @@ public class IniGsxParser
         // Collect global service definitions (GndService_* sections)
         var globalServices = new Dictionary<string, GroundService>(StringComparer.OrdinalIgnoreCase);
 
-        // First pass: handle service sections, jetway_rootfloor_heights, and deice sections
-        foreach (var section in data.Sections)
+        // First pass: handle service sections, jetway_rootfloor_heights, gate groups and deice sections
+        foreach (var section in sections)
         {
             string name = section.SectionName.Trim();
 
@@ -60,6 +102,14 @@ public class IniGsxParser
                 continue;
             }
 
+            // Gate groups
+            if (GateGroupRegex.IsMatch(name))
+            {
+                var gid = GateGroupRegex.Match(name).Groups[1].Value.Trim();
+                cfg.GateGroups.Add(ParseGateGroupSection(gid, section.Keys));
+                continue;
+            }
+
             if (IsServiceSection(name))
             {
                 var svcId = name;
@@ -71,7 +121,7 @@ public class IniGsxParser
         }
 
         // Second pass: handle gates and remaining sections
-        foreach (var section in data.Sections)
+        foreach (var section in sections)
         {
             string name = section.SectionName.Trim();
 
@@ -86,7 +136,6 @@ public class IniGsxParser
             // Skip sections already processed above (services, jetway config, deice)
             if (IsServiceSection(name) || string.Equals(name, "jetway_rootfloor_heights", StringComparison.OrdinalIgnoreCase) || DeIceRegex.IsMatch(name))
             {
-                // intentionally skip
                 continue;
             }
 
@@ -100,157 +149,166 @@ public class IniGsxParser
         return cfg;
     }
 
-    private bool IsGateSection(string sectionName)
+    // Lightweight in-file types to avoid external IniParser dependency
+    private sealed class SectionData
     {
-        // quick check then regex capture
-        return GateRegex.IsMatch(sectionName);
+        public string SectionName { get; }
+        public KeyCollection Keys { get; }
+        public SectionData(string name, KeyCollection keys) { SectionName = name; Keys = keys; }
     }
+
+    private sealed class KeyCollection : IEnumerable<KeyItem>
+    {
+        private readonly Dictionary<string, string> _dict = new(StringComparer.OrdinalIgnoreCase);
+        public void Add(string k, string v) => _dict[k] = v;
+        public bool ContainsKey(string k) => _dict.ContainsKey(k);
+        public string this[string k] { get => _dict.TryGetValue(k, out var v) ? v : string.Empty; set => _dict[k] = value; }
+        public IEnumerator<KeyItem> GetEnumerator() => _dict.Select(kvp => new KeyItem(kvp.Key, kvp.Value)).GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public int Count => _dict.Count;
+    }
+
+    private sealed class KeyItem
+    {
+        public string KeyName { get; }
+        public string Value { get; }
+        public KeyItem(string name, string value) { KeyName = name; Value = value; }
+    }
+
+    private bool IsGateSection(string sectionName) => GateRegex.IsMatch(sectionName);
 
     private bool IsServiceSection(string sectionName)
     {
         return ServiceSectionPrefixes.Any(prefix => sectionName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
     }
 
-    private void ParseJetwayRootfloorSection(KeyDataCollection keys, GroundServiceConfig cfg)
+    private void ParseJetwayRootfloorSection(KeyCollection keys, GroundServiceConfig cfg)
     {
-        foreach (var k in keys)
-        {
-            var key = k.KeyName.Trim();
-            var value = k.Value.Trim();
-
-            // try parse numeric value (double)
-            if (TryParseInvariant(value, out var d))
-            {
-                cfg.JetwayRootfloorHeights[key] = d;
-            }
-            else
-            {
-                // store as metadata if not numeric
-                cfg.Metadata[$"jetway_rootfloor_heights.{key}"] = value;
-            }
-        }
-    }
-
-    private DeIceDefinition ParseDeIceSection(string sectionName, KeyDataCollection keys)
-    {
-        var deice = new DeIceDefinition
-        {
-            Id = sectionName
-        };
-
         foreach (var k in keys)
         {
             var key = k.KeyName.Trim();
             var val = k.Value.Trim();
 
-            // if there's a 'type' key, capture it
-            if (string.Equals(key, "type", StringComparison.OrdinalIgnoreCase))
+            if (TryParseInvariant(val, out var d))
             {
-                deice.Type = val;
+                cfg.JetwayRootfloorHeights[key] = d;
             }
-            deice.Properties[key] = val;
+            else
+            {
+                cfg.Metadata[$"jetway_rootfloor_heights.{key}"] = val;
+            }
         }
-
-        return deice;
     }
 
-    private GateDefinition ParseGateSection(string sectionName, KeyDataCollection keys, Dictionary<string, GroundService> globalServices)
+    private DeIceDefinition ParseDeIceSection(string sectionName, KeyCollection keys)
     {
-        // Gate ID is the captured group after the prefix (Gate|Stand|Parking)
-        string gateId = sectionName;
-        var m = GateRegex.Match(sectionName);
-        if (m.Success)
+        var d = new DeIceDefinition { Id = sectionName };
+        foreach (var k in keys)
         {
-            gateId = m.Groups[2].Value.Trim();
+            var key = k.KeyName.Trim();
+            var val = k.Value.Trim();
+            if (string.Equals(key, "type", StringComparison.OrdinalIgnoreCase))
+                d.Type = val;
+            d.Properties[key] = val;
         }
+        return d;
+    }
+
+    private GateGroup ParseGateGroupSection(string id, KeyCollection keys)
+    {
+        var g = new GateGroup { Id = id };
+        foreach (var k in keys)
+        {
+            var key = k.KeyName.Trim();
+            var val = k.Value.Trim();
+            if (string.Equals(key, "members", StringComparison.OrdinalIgnoreCase))
+            {
+                foreach (var m in SplitList(val)) g.Members.Add(m);
+            }
+            else
+            {
+                g.Properties[key] = val;
+            }
+        }
+        return g;
+    }
+
+    private GateDefinition ParseGateSection(string sectionName, KeyCollection keys, Dictionary<string, GroundService> globalServices)
+    {
+        var match = GateRegex.Match(sectionName);
+        var gateId = match.Success ? match.Groups[2].Value.Trim() : sectionName;
 
         var gate = new GateDefinition { GateId = gateId };
 
-        // Position
-        double? lat = null, lon = null, heading = null;
-        if (TryGet(keys, "lat", out var latS) && TryParseInvariant(latS, out var latV)) lat = latV;
-        if (TryGet(keys, "lon", out var lonS) && TryParseInvariant(lonS, out var lonV)) lon = lonV;
-        if (TryGet(keys, "heading", out var hS) && TryParseInvariant(hS, out var headingV)) heading = headingV;
+        // Position fields
+        if (TryGet(keys, "lat", out var latS) && TryParseInvariant(latS, out var lat)) gate.Position.Latitude = lat;
+        if (TryGet(keys, "lon", out var lonS) && TryParseInvariant(lonS, out var lon)) gate.Position.Longitude = lon;
+        if (TryGet(keys, "heading", out var hS) && TryParseInvariant(hS, out var heading)) gate.Position.Heading = heading;
 
-        // Some GSX files use spawn_lat/spawn_lon for the gate; map those if present and position was not set
-        if ((!lat.HasValue && !lon.HasValue) &&
-            (TryGet(keys, "spawn_lat", out var sl) || TryGet(keys, "spawn_latitude", out sl)))
+        // fallback spawn coords if lat/lon missing
+        if ((gate.Position.Latitude == 0 && gate.Position.Longitude == 0) &&
+            (TryGet(keys, "spawn_lat", out var sLat) || TryGet(keys, "spawn_latitude", out sLat)))
         {
-            if (TryParseInvariant(sl, out var spawnLat)) lat = spawnLat;
-            if (TryGet(keys, "spawn_lon", out var slon) && TryParseInvariant(slon, out var spawnLon)) lon = spawnLon;
-            if (TryGet(keys, "spawn_heading", out var sh) && TryParseInvariant(sh, out var spawnHeading)) heading = spawnHeading;
+            if (TryParseInvariant(sLat, out var lat2)) gate.Position.Latitude = lat2;
+            if (TryGet(keys, "spawn_lon", out var sLon) && TryParseInvariant(sLon, out var lon2)) gate.Position.Longitude = lon2;
+            if (TryGet(keys, "spawn_heading", out var sH) && TryParseInvariant(sH, out var h2)) gate.Position.Heading = h2;
         }
 
-        if (lat.HasValue) gate.Position.Latitude = lat.Value;
-        if (lon.HasValue) gate.Position.Longitude = lon.Value;
-        if (heading.HasValue) gate.Position.Heading = heading.Value;
-
-        // Tags and lists
-        if (TryGet(keys, "tags", out var tagsS)) gate.Tags.AddRange(SplitList(tagsS));
+        // tags/categories
+        if (TryGet(keys, "tags", out var tags)) gate.Tags.AddRange(SplitList(tags));
         if (TryGet(keys, "category", out var cat) && !string.IsNullOrWhiteSpace(cat)) gate.Tags.Add(cat);
 
-        // Services referenced inline like service_1 = GndService_Pushback or service_1 = pushback
-        var services = new List<GroundService>();
-        foreach (var key in keys)
+        // allowed aircraft lists
+        if (TryGet(keys, "allowed_aircraft", out var allowed) || TryGet(keys, "allowedaircraft", out allowed))
         {
-            if (key.KeyName.StartsWith("service_", StringComparison.OrdinalIgnoreCase))
-            {
-                var svcRef = key.Value.Trim();
-                if (string.IsNullOrEmpty(svcRef)) continue;
+            foreach (var a in SplitList(allowed)) gate.AllowedAircraft.Add(a);
+        }
 
-                // If it's a global service section name, use that definition
+        // services referenced inline
+        var services = new List<GroundService>();
+        foreach (var k in keys)
+        {
+            if (k.KeyName.StartsWith("service_", StringComparison.OrdinalIgnoreCase))
+            {
+                var svcRef = k.Value.Trim();
+                if (string.IsNullOrEmpty(svcRef)) continue;
                 if (globalServices.TryGetValue(svcRef, out var gs))
-                {
-                    // clone gs to avoid cross-gate sharing of dict instances
                     services.Add(CloneService(gs));
-                }
                 else
-                {
-                    // inline shorthand: e.g., service_1 = pushback
-                    var svc = new GroundService { Type = svcRef };
-                    services.Add(svc);
-                }
+                    services.Add(new GroundService { Type = svcRef });
             }
         }
 
-        // Also support explicit keys per service (serviceType, offset, spawn_lat, spawn_lon, spawn_heading)
+        // explicit per-section service fields (serviceType, offset, spawn_lat etc.)
         if (TryGet(keys, "serviceType", out var st))
         {
             var svc = new GroundService { Type = st };
             if (TryGet(keys, "offset", out var offS) && TryParseInvariant(offS, out var off)) svc.OffsetMeters = off;
             if (TryGet(keys, "offset_meters", out var offm) && TryParseInvariant(offm, out off)) svc.OffsetMeters = off;
             var spawn = new Position();
-            bool hasSpawn = false;
-            if (TryGet(keys, "spawn_lat", out var spLat) && TryParseInvariant(spLat, out var spl)) { spawn.Latitude = spl; hasSpawn = true; }
-            if (TryGet(keys, "spawn_lon", out var spLon) && TryParseInvariant(spLon, out var splon)) { spawn.Longitude = splon; hasSpawn = true; }
-            if (TryGet(keys, "spawn_heading", out var spH) && TryParseInvariant(spH, out var sph)) { spawn.Heading = sph; hasSpawn = true; }
+            var hasSpawn = false;
+            if (TryGet(keys, "spawn_lat", out var spl) && TryParseInvariant(spl, out var spln)) { spawn.Latitude = spln; hasSpawn = true; }
+            if (TryGet(keys, "spawn_lon", out var splon) && TryParseInvariant(splon, out var splonv)) { spawn.Longitude = splonv; hasSpawn = true; }
+            if (TryGet(keys, "spawn_heading", out var sph) && TryParseInvariant(sph, out var sphv)) { spawn.Heading = sphv; hasSpawn = true; }
             if (hasSpawn) svc.SpawnCoords = spawn;
-
-            // collect additional unknown keys for the service
-            foreach (var key in keys)
+            // collect extra svc.* keys
+            foreach (var k in keys)
             {
-                if (key.KeyName.StartsWith("service.", StringComparison.OrdinalIgnoreCase) ||
-                    key.KeyName.StartsWith("svc_", StringComparison.OrdinalIgnoreCase))
-                {
-                    svc.Properties[key.KeyName] = key.Value;
-                }
+                if (k.KeyName.StartsWith("service.", StringComparison.OrdinalIgnoreCase) || k.KeyName.StartsWith("svc_", StringComparison.OrdinalIgnoreCase))
+                    svc.Properties[k.KeyName] = k.Value;
             }
-
             services.Add(svc);
         }
 
-        // If service entries were not found, try to infer from keys like pushback=1 or marshaller=1
-        var inferred = InferServicesFromFlags(keys);
-        services.AddRange(inferred);
+        // infer services from boolean flags (pushback=1, marshaller=1 etc.)
+        services.AddRange(InferServicesFromFlags(keys));
 
-        // Save services on gate
         gate.Services = services;
 
-        // Capture remaining keys into properties
+        // remaining keys -> gate properties (preserve)
         foreach (var k in keys)
         {
-            string keyName = k.KeyName;
-            // skip parsed keys
+            var keyName = k.KeyName;
             if (IsParsedKey(keyName)) continue;
             gate.Properties[keyName] = k.Value;
         }
@@ -258,31 +316,24 @@ public class IniGsxParser
         return gate;
     }
 
-    private GroundService ParseServiceSection(string sectionName, KeyDataCollection keys)
+    private GroundService ParseServiceSection(string sectionName, KeyCollection keys)
     {
-        // Create a service DTO from a global GndService_* section
-        // sectionName kept as id in metadata elsewhere
         var svc = new GroundService();
-
-        // determine canonical type if present
         if (TryGet(keys, "type", out var t)) svc.Type = t;
         else if (sectionName.IndexOf("push", StringComparison.OrdinalIgnoreCase) >= 0) svc.Type = "pushback";
-        else if (sectionName.IndexOf("gear", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                 sectionName.IndexOf("marshall", StringComparison.OrdinalIgnoreCase) >= 0) svc.Type = "marshaller";
+        else if (sectionName.IndexOf("marshall", StringComparison.OrdinalIgnoreCase) >= 0 || sectionName.IndexOf("gear", StringComparison.OrdinalIgnoreCase) >= 0) svc.Type = "marshaller";
 
-        // offset / offset_meters
         if (TryGet(keys, "offset", out var offS) && TryParseInvariant(offS, out var off)) svc.OffsetMeters = off;
         if (TryGet(keys, "offset_meters", out var offm) && TryParseInvariant(offm, out off)) svc.OffsetMeters = off;
 
-        // spawn coords (optional)
         var spawn = new Position();
-        bool hasSpawn = false;
+        var hasSpawn = false;
         if (TryGet(keys, "spawn_lat", out var sl) && TryParseInvariant(sl, out var lat)) { spawn.Latitude = lat; hasSpawn = true; }
         if (TryGet(keys, "spawn_lon", out var slon) && TryParseInvariant(slon, out var lon)) { spawn.Longitude = lon; hasSpawn = true; }
         if (TryGet(keys, "spawn_heading", out var sh) && TryParseInvariant(sh, out var h)) { spawn.Heading = h; hasSpawn = true; }
         if (hasSpawn) svc.SpawnCoords = spawn;
 
-        // arbitrary properties
+        // copy all keys into properties for traceability
         foreach (var k in keys)
         {
             svc.Properties[k.KeyName] = k.Value;
@@ -291,23 +342,17 @@ public class IniGsxParser
         return svc;
     }
 
-    private List<GroundService> InferServicesFromFlags(KeyDataCollection keys)
+    private List<GroundService> InferServicesFromFlags(KeyCollection keys)
     {
         var list = new List<GroundService>();
-        // common boolean flags indicating availability of services
         var flags = new[] { "pushback", "marshaller", "catering", "baggage", "fuel" };
         foreach (var f in flags)
         {
-            if (TryGet(keys, f, out var v))
-            {
-                if (IsTrueValue(v))
-                {
-                    list.Add(new GroundService { Type = f });
-                }
-            }
+            if (TryGet(keys, f, out var v) && IsTrueValue(v))
+                list.Add(new GroundService { Type = f });
         }
 
-        // also detect pushback offset keys like pushback_offset
+        // look for pushback_offset style keys
         foreach (var k in keys)
         {
             if (k.KeyName.IndexOf("pushback", StringComparison.OrdinalIgnoreCase) >= 0 &&
@@ -322,7 +367,7 @@ public class IniGsxParser
         return list;
     }
 
-    private bool TryGet(KeyDataCollection keys, string keyName, out string value)
+    private bool TryGet(KeyCollection keys, string keyName, out string value)
     {
         value = string.Empty;
         if (keys.ContainsKey(keyName))
@@ -330,15 +375,12 @@ public class IniGsxParser
             value = keys[keyName].Trim();
             return true;
         }
-
-        // try common case-insensitive variants
         var found = keys.FirstOrDefault(k => string.Equals(k.KeyName, keyName, StringComparison.OrdinalIgnoreCase));
         if (found != null && !string.IsNullOrEmpty(found.Value))
         {
             value = found.Value.Trim();
             return true;
         }
-
         return false;
     }
 
@@ -381,7 +423,7 @@ public class IniGsxParser
         string[] parsedPrefixes = {
             "lat", "lon", "heading", "spawn_lat", "spawn_lon", "spawn_heading",
             "service_", "serviceType", "offset", "offset_meters", "tags", "category",
-            "pushback", "marshaller", "catering", "fuel"
+            "pushback", "marshaller", "catering", "fuel", "allowed_aircraft", "members"
         };
 
         return parsedPrefixes.Any(p => key.StartsWith(p, StringComparison.OrdinalIgnoreCase));
