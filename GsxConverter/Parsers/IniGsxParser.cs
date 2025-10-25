@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text.RegularExpressions;
 using GsxConverter.Models;
 using IniParser;
 using IniParser.Model;
@@ -9,11 +10,21 @@ namespace GsxConverter.Parsers;
 /// Extended INI parser for GSX files.
 /// Maps common GSX sections and keys into canonical DTOs.
 /// Preserves unknown keys into properties and metadata.
+/// Adds:
+///  - typed parsing for [jetway_rootfloor_heights]
+///  - top-level DeIce objects for DeIce* sections
+///  - more robust gate section name detection (supports "Gate_", "Gate ", "Gate-")
 /// </summary>
 public class IniGsxParser
 {
-    private static readonly string[] GateSectionPrefixes = { "Gate_", "Stand_", "Parking_" };
-    private static readonly string[] ServiceSectionPrefixes = { "GndService_", "Service_" };
+    private static readonly string[] GateSectionPrefixes = { "Gate", "Stand", "Parking" };
+    private static readonly string[] ServiceSectionPrefixes = { "GndService", "Service" };
+
+    // regex to capture "Gate", optional separator, and id
+    private static readonly Regex GateRegex = new Regex(@"^(Gate|Stand|Parking)[\s_\-:]*(.+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    // De-ice section names: starts with deice, de-ice, de_ice (case-insensitive)
+    private static readonly Regex DeIceRegex = new Regex(@"^de[-_]?ice", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public GroundServiceConfig ParseFile(string path)
     {
@@ -30,9 +41,25 @@ public class IniGsxParser
         // Collect global service definitions (GndService_* sections)
         var globalServices = new Dictionary<string, GroundService>(StringComparer.OrdinalIgnoreCase);
 
+        // First pass: handle service sections, jetway_rootfloor_heights, and deice sections
         foreach (var section in data.Sections)
         {
             string name = section.SectionName.Trim();
+
+            // Jetway config section
+            if (string.Equals(name, "jetway_rootfloor_heights", StringComparison.OrdinalIgnoreCase))
+            {
+                ParseJetwayRootfloorSection(section.Keys, cfg);
+                continue;
+            }
+
+            // DeIce sections -> top-level DeIces list
+            if (DeIceRegex.IsMatch(name))
+            {
+                var deice = ParseDeIceSection(name, section.Keys);
+                cfg.DeIces.Add(deice);
+                continue;
+            }
 
             if (IsServiceSection(name))
             {
@@ -40,10 +67,11 @@ public class IniGsxParser
                 var svc = ParseServiceSection(svcId, section.Keys);
                 globalServices[svcId] = svc;
                 // Also store as metadata for traceability
-                cfg.Metadata[$"service.{svcId}.type"] = svc.Type;
+                cfg.Metadata[$"service.{svcId}.type"] = svc.Type ?? string.Empty;
             }
         }
 
+        // Second pass: handle gates and remaining sections
         foreach (var section in data.Sections)
         {
             string name = section.SectionName.Trim();
@@ -53,9 +81,9 @@ public class IniGsxParser
                 var gate = ParseGateSection(name, section.Keys, globalServices);
                 cfg.Gates.Add(gate);
             }
-            else if (IsServiceSection(name))
+            else if (IsServiceSection(name) || string.Equals(name, "jetway_rootfloor_heights", StringComparison.OrdinalIgnoreCase) || DeIceRegex.IsMatch(name))
             {
-                // already processed above
+                // Already processed above
                 continue;
             }
             else
@@ -73,7 +101,8 @@ public class IniGsxParser
 
     private bool IsGateSection(string sectionName)
     {
-        return GateSectionPrefixes.Any(prefix => sectionName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+        // quick check then regex capture
+        return GateRegex.IsMatch(sectionName);
     }
 
     private bool IsServiceSection(string sectionName)
@@ -81,17 +110,57 @@ public class IniGsxParser
         return ServiceSectionPrefixes.Any(prefix => sectionName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
     }
 
+    private void ParseJetwayRootfloorSection(KeyDataCollection keys, GroundServiceConfig cfg)
+    {
+        foreach (var k in keys)
+        {
+            var key = k.KeyName.Trim();
+            var value = k.Value.Trim();
+
+            // try parse numeric value (double)
+            if (TryParseInvariant(value, out var d))
+            {
+                cfg.JetwayRootfloorHeights[key] = d;
+            }
+            else
+            {
+                // store as metadata if not numeric
+                cfg.Metadata[$"jetway_rootfloor_heights.{key}"] = value;
+            }
+        }
+    }
+
+    private DeIceDefinition ParseDeIceSection(string sectionName, KeyDataCollection keys)
+    {
+        var deice = new DeIceDefinition
+        {
+            Id = sectionName
+        };
+
+        foreach (var k in keys)
+        {
+            var key = k.KeyName.Trim();
+            var val = k.Value.Trim();
+
+            // if there's a 'type' key, capture it
+            if (string.Equals(key, "type", StringComparison.OrdinalIgnoreCase))
+            {
+                deice.Type = val;
+            }
+            deice.Properties[key] = val;
+        }
+
+        return deice;
+    }
+
     private GateDefinition ParseGateSection(string sectionName, KeyDataCollection keys, Dictionary<string, GroundService> globalServices)
     {
-        // Gate ID is the part after the prefix if known, otherwise full name
+        // Gate ID is the captured group after the prefix (Gate|Stand|Parking)
         string gateId = sectionName;
-        foreach (var p in GateSectionPrefixes)
+        var m = GateRegex.Match(sectionName);
+        if (m.Success)
         {
-            if (sectionName.StartsWith(p, StringComparison.OrdinalIgnoreCase))
-            {
-                gateId = sectionName.Substring(p.Length);
-                break;
-            }
+            gateId = m.Groups[2].Value.Trim();
         }
 
         var gate = new GateDefinition { GateId = gateId };
@@ -140,7 +209,6 @@ public class IniGsxParser
         }
 
         // Also support explicit keys per service (serviceType, offset, spawn_lat, spawn_lon, spawn_heading)
-        // We'll create a single service when keys like serviceType exist
         if (TryGet(keys, "serviceType", out var st))
         {
             var svc = new GroundService { Type = st };
@@ -212,7 +280,6 @@ public class IniGsxParser
         // arbitrary properties
         foreach (var k in keys)
         {
-            // standard keys already processed, but it's fine to copy all into properties too for traceability
             svc.Properties[k.KeyName] = k.Value;
         }
 
