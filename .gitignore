@@ -1,0 +1,9 @@
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.log
+*.db
+*.idea/
+*.Rider/

@@ -1,0 +1,66 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/gsx-groundservice.schema.json",
+  "title": "Ground Service Config",
+  "type": "object",
+  "required": ["airport","gates"],
+  "properties": {
+    "airport": {
+      "type": "string",
+      "description": "ICAO code of the airport"
+    },
+    "version": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["gate_id","position"],
+        "properties": {
+          "gate_id": { "type": "string" },
+          "position": {
+            "type": "object",
+            "required": ["lat","lon"],
+            "properties": {
+              "lat": { "type": "number" },
+              "lon": { "type": "number" },
+              "heading": { "type": "number" }
+            }
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": { "type": "string" },
+                "offset": { "type": ["number","null"] },
+                "spawn_coords": {
+                  "type": ["object","null"],
+                  "properties": {
+                    "lat": { "type": "number" },
+                    "lon": { "type": "number" },
+                    "heading": { "type": "number" }
+                  }
+                },
+                "properties": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" }
+                }
+              }
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}
