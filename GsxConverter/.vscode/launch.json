@@ -5,44 +5,22 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Launch GsxConverter (Console)",
-			"type": "coreclr",
+			"name": ".NET: GsxConverter (Console)",
+			"type": "dotnet",
 			"request": "launch",
-			"program": "${workspaceFolder}/GsxConverter/bin/Debug/net9.0/GsxConverter.dll",
-			"args": [],
-			"cwd": "${workspaceFolder}/GsxConverter",
-			"console": "internalConsole",
-			"stopAtEntry": false,
-			"requireExactSource": true,
+			"projectPath": "${workspaceFolder}/GsxConverter/GsxConverter.csproj",
 			"preLaunchTask": "build-console"
 		},
 		{
-			"name": "Launch GsxConverter (External Terminal)",
-			"type": "coreclr",
+			"name": ".NET MAUI: UI.Maui (Windows)",
+			"type": "dotnet",
 			"request": "launch",
-			"program": "${workspaceFolder}/GsxConverter/bin/Debug/net9.0/GsxConverter.dll",
-			"args": [],
-			"cwd": "${workspaceFolder}/GsxConverter",
-			"console": "externalTerminal",
-			"stopAtEntry": false,
-			"requireExactSource": true,
-			"preLaunchTask": "build-console"
-		},
-		{
-			"name": "Launch UI.Maui (Windows)",
-			"type": "coreclr",
-			"request": "launch",
-			"program": "${workspaceFolder}/UI.Maui/bin/Debug/net9.0-windows10.0.19041.0/win10-x64/UI.Maui.exe",
-			"args": [],
-			"cwd": "${workspaceFolder}/UI.Maui",
-			"console": "internalConsole",
-			"stopAtEntry": false,
-			"requireExactSource": true,
+			"projectPath": "${workspaceFolder}/UI.Maui/UI.Maui.csproj",
 			"preLaunchTask": "build-maui"
 		},
 		{
 			"name": "Attach to Process",
-			"type": "coreclr",
+			"type": "dotnet",
 			"request": "attach",
 			"processId": "${command:pickProcess}"
 		}
