@@ -46,6 +46,11 @@ namespace GsxConverter.Parsers
             foreach (var oGate in overrides.Gates)
             {
                 var match = baseCfg.Gates.FirstOrDefault(g => string.Equals(g.GateId, oGate.GateId, StringComparison.OrdinalIgnoreCase));
+                // Fallback: if override GateId is a plain number (from Python parkings dict), try match by ending number
+                if (match == null && int.TryParse(oGate.GateId, out var gateNum))
+                {
+                    match = baseCfg.Gates.FirstOrDefault(g => g.GateId.EndsWith(gateNum.ToString(), StringComparison.OrdinalIgnoreCase));
+                }
                 if (match == null)
                 {
                     // new gate introduced by Python -> add
@@ -91,6 +96,10 @@ namespace GsxConverter.Parsers
             if (source.PushbackAddPos != null && source.PushbackAddPos.Count > 0)
                 target.PushbackAddPos = source.PushbackAddPos;
 
+            // UI name overrides
+            if (!string.IsNullOrEmpty(source.UiName))
+                target.UiName = source.UiName;
+
             // Waypoints: if present on source, replace
             if (source.WalkerWaypoints != null)
                 target.WalkerWaypoints = source.WalkerWaypoints;
@@ -107,11 +116,13 @@ namespace GsxConverter.Parsers
                 }
             }
 
-            // Aircraft stop positions: override or add per key
+            // Aircraft stop positions: Python values take precedence over INI
             if (source.AircraftStopPositions != null && source.AircraftStopPositions.Count > 0)
             {
                 if (target.AircraftStopPositions == null)
-                    target.AircraftStopPositions = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+                    target.AircraftStopPositions = new Dictionary<string, StopPositionsEntry>(StringComparer.OrdinalIgnoreCase);
+                
+                // Python (source) takes precedence - directly overwrite all its keys
                 foreach (var kv in source.AircraftStopPositions)
                 {
                     target.AircraftStopPositions[kv.Key] = kv.Value;

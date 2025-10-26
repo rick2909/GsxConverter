@@ -19,7 +19,7 @@ public class GateDefinition
     // Aircraft-specific custom stop positions coming from the Python functions table
     // Key: aircraft ICAO (e.g., A20N, B738), Value: stop distance (meters)
     [JsonPropertyName("aircraft_stop_positions")]
-    public Dictionary<string, double> AircraftStopPositions { get; set; } = new();
+    public Dictionary<string, StopPositionsEntry> AircraftStopPositions { get; set; } = new();
 
     // GSX-specific gate properties
     [JsonPropertyName("gate_type")]

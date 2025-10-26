@@ -168,8 +168,19 @@
         },
         "aircraft_stop_positions": {
           "type": "object",
-          "additionalProperties": { "type": "number" },
-          "description": "Per-aircraft ICAO stop distances (meters) sourced from Python overrides"
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "number" },
+              {
+                "type": "object",
+                "properties": {
+                  "Def": { "type": ["number", "null"] }
+                },
+                "additionalProperties": { "type": "number" }
+              }
+            ]
+          },
+          "description": "Per-aircraft stop positions: either a single number (meters) or an object with 'Def' and variant keys (e.g., 737 minors)"
         },
         "gate_type": { "type": ["integer", "null"] },
         "max_wingspan": { "type": ["number", "null"] },
