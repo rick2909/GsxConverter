@@ -308,7 +308,7 @@ public class PythonGsxParser
                 }
                 if (double.TryParse(fallbackStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var fb))
                 {
-                    entry.Def = fb;
+                    entry.Variants["default"] = fb;
                 }
                 result[major] = entry;
             }
@@ -337,7 +337,11 @@ public class PythonGsxParser
             {
                 foreach (var kv in table)
                 {
-                    result[kv.Key] = new StopPositionsEntry { Single = kv.Value };
+                    // Skip if already added as variant entry
+                    if (!result.ContainsKey(kv.Key))
+                    {
+                        result[kv.Key] = new StopPositionsEntry { Single = kv.Value };
+                    }
                 }
                 if (double.TryParse(fallbackStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var fb))
                 {
@@ -359,7 +363,11 @@ public class PythonGsxParser
                 {
                     foreach (var kv in table)
                     {
-                        result[kv.Key] = new StopPositionsEntry { Single = kv.Value };
+                        // Skip if already added as variant entry
+                        if (!result.ContainsKey(kv.Key))
+                        {
+                            result[kv.Key] = new StopPositionsEntry { Single = kv.Value };
+                        }
                     }
                     if (double.TryParse(fallbackStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var fb))
                     {

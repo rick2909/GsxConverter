@@ -9,8 +9,7 @@ public class StopPositionsEntry
     // If set, emit as a single number value
     public double? Single { get; set; }
 
-    // If set, emit as an object with optional Def and variant keys
-    public double? Def { get; set; }
+    // If set, emit as an object with variant keys (including optional "default")
     public Dictionary<string, double>? Variants { get; set; }
 
     public bool HasVariants => Variants != null && Variants.Count > 0;
@@ -36,21 +35,13 @@ public class StopPositionsEntryConverter : JsonConverter<StopPositionsEntry>
                 {
                     var prop = reader.GetString() ?? string.Empty;
                     reader.Read();
-                    if (string.Equals(prop, "Def", StringComparison.OrdinalIgnoreCase))
+                    if (reader.TokenType == JsonTokenType.Number)
                     {
-                        if (reader.TokenType == JsonTokenType.Number) entry.Def = reader.GetDouble();
-                        else if (reader.TokenType == JsonTokenType.Null) entry.Def = null;
+                        entry.Variants![prop] = reader.GetDouble();
                     }
                     else
                     {
-                        if (reader.TokenType == JsonTokenType.Number)
-                        {
-                            entry.Variants![prop] = reader.GetDouble();
-                        }
-                        else
-                        {
-                            reader.Skip();
-                        }
+                        reader.Skip();
                     }
                 }
             }
@@ -68,14 +59,9 @@ public class StopPositionsEntryConverter : JsonConverter<StopPositionsEntry>
             return;
         }
         writer.WriteStartObject();
-        if (value.Def.HasValue)
-        {
-            writer.WritePropertyName("Def");
-            writer.WriteNumberValue(value.Def.Value);
-        }
         if (value.Variants != null)
         {
-            foreach (var kv in value.Variants)
+            foreach (var kv in value.Variants.OrderBy(x => x.Key == "default" ? "zzz" : x.Key))
             {
                 writer.WritePropertyName(kv.Key);
                 writer.WriteNumberValue(kv.Value);
