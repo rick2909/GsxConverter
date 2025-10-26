@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GSX Native Panel</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>GSX Native</h1>
+      <div class="status">
+        <span id="icao">ICAO: N/A</span>
+        <button id="refresh">Refresh</button>
+      </div>
+    </header>
+    <section class="controls">
+      <label>
+        Airport JSON:
+        <select id="profileSelect">
+          <option value="./assets/airports/eham.sample.json">EHAM (sample)</option>
+        </select>
+      </label>
+    </section>
+    <section id="summary"></section>
+    <section id="gates"></section>
+  </div>
+  <script src="./js/main.js"></script>
+</body>
+</html>

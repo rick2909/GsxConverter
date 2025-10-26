@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<InGamePanel id="GSX_NATIVE_PANEL" title="GSX" tooltip="GSX Native" width="420" height="600" icon="/Pages/VCockpit/Instruments/Shared/Assets/Images/Generic/ATC.svg">
+  <JS id="GSX_NATIVE_PANEL_JS" src="/html_ui/InGamePanels/gsx-native-panel/index.html" />
+</InGamePanel>
