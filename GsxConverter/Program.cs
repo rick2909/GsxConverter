@@ -10,7 +10,15 @@ internal class Program
     {
         if (args.Length == 0 || args[0] == "--help" || args[0] == "-h")
         {
-            Console.WriteLine("Usage: GsxConverter --input <gsx.ini> --output <out.json>");
+            Console.WriteLine("GSX Converter - Unified parser for GSX INI and Python configuration files");
+            Console.WriteLine();
+            Console.WriteLine("Usage:");
+            Console.WriteLine("  GsxConverter --input <file> --output <out.json>");
+            Console.WriteLine("  GsxConverter --test                              # Run comprehensive tests");
+            Console.WriteLine();
+            Console.WriteLine("Supported input formats:");
+            Console.WriteLine("  .ini files - GSX INI configuration format");
+            Console.WriteLine("  .py files  - GSX Python configuration format");
             return 1;
         }
 
@@ -34,21 +42,56 @@ internal class Program
 
         try
         {
-            Console.WriteLine($"Parsing INI: {input}");
-            var parser = new IniGsxParser();
-            GroundServiceConfig config = parser.ParseFile(input);
+            Console.WriteLine($"Parsing input: {input}");
+            
+            GroundServiceConfig config;
+            var extension = Path.GetExtension(input).ToLowerInvariant();
+            
+            switch (extension)
+            {
+                case ".ini":
+                    var iniParser = new IniGsxParser();
+                    config = iniParser.ParseFile(input);
+                    break;
+                    
+                case ".py":
+                    var pythonParser = new PythonGsxParser();
+                    config = pythonParser.ParseFile(input);
+                    break;
+                    
+                default:
+                    Console.Error.WriteLine($"Unsupported file format: {extension}");
+                    Console.Error.WriteLine("Supported formats: .ini, .py");
+                    return 4;
+            }
 
             Console.WriteLine($"Serializing canonical JSON to: {output}");
-            var options = new JsonSerializerOptions { WriteIndented = true };
+            var options = new JsonSerializerOptions 
+            { 
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
             string json = JsonSerializer.Serialize(config, options);
             File.WriteAllText(output, json);
 
+            // Print summary
+            Console.WriteLine();
+            Console.WriteLine("Conversion Summary:");
+            Console.WriteLine($"  Airport: {config.AirportIcao}");
+            Console.WriteLine($"  Gates: {config.Gates.Count}");
+            Console.WriteLine($"  DeIce Areas: {config.DeIces.Count}");
+            Console.WriteLine($"  Jetway Heights: {config.JetwayRootfloorHeights.Count}");
+            Console.WriteLine($"  Gate Groups: {config.GateGroups.Count}");
             Console.WriteLine("Done.");
             return 0;
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Error: {ex.Message}");
+            if (args.Contains("--verbose"))
+            {
+                Console.Error.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
             return 3;
         }
     }

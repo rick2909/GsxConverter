@@ -208,6 +208,32 @@ public class IniGsxParser
     private DeIceDefinition ParseDeIceSection(string sectionName, KeyCollection keys)
     {
         var d = new DeIceDefinition { Id = sectionName };
+
+        // Parse structured deice area properties
+        if (TryGet(keys, "uiname", out var uiName))
+            d.UiName = uiName;
+
+        if (TryGet(keys, "is_deicearea", out var isDeiceS))
+            d.IsDeiceArea = ParseGsxBoolean(isDeiceS);
+
+        if (TryGet(keys, "this_parking_pos", out var posS))
+            d.Position = ParsePosition(posS);
+
+        if (TryGet(keys, "parkingsystem", out var parkingSystem))
+            d.ParkingSystem = parkingSystem;
+
+        if (TryGet(keys, "radius", out var radiusS) && TryParseInvariant(radiusS, out var radius))
+            d.Radius = radius;
+
+        if (TryGet(keys, "parkingsystem_stopposition", out var stopPosS))
+            d.ParkingSystemStopPosition = ParsePosition(stopPosS);
+
+        if (TryGet(keys, "parkingsystem_objectposition", out var objPosS))
+            d.ParkingSystemObjectPosition = ParseParkingSystemObjectPosition(objPosS);
+
+        if (TryGet(keys, "usercustomized", out var userCustomS))
+            d.UserCustomized = ParseGsxBoolean(userCustomS);
+
         foreach (var k in keys)
         {
             var key = k.KeyName.Trim();
@@ -379,6 +405,29 @@ public class IniGsxParser
         // Parse equipment positions
         gate.BaggagePositions = ParseBaggagePositions(keys);
         gate.StairsPositions = ParseStairsPositions(keys);
+
+        // Parse waypoints and paths
+        gate.WalkerWaypoints = ParseWaypointPath(keys, "walkerwaypoints", "walkerpaththickness");
+        gate.PassengerWaypoints = ParseWaypointPath(keys, "passengerwaypoints", "passengerpaththickness");
+
+        // Parse passenger enter gate position
+        if (TryGet(keys, "passengerentergatepos", out var passengerEnterGateS))
+            gate.PassengerEnterGatePos = ParsePosition3D(passengerEnterGateS);
+
+        // Parse texture configurations
+        if (TryGet(keys, "paxbarrierstexture", out var paxBarriersTextureS))
+            gate.PaxBarriersTexture = paxBarriersTextureS;
+
+        // Parse additional pushback configuration
+        if (TryGet(keys, "pushback", out var pushbackS) && int.TryParse(pushbackS, out var pushback))
+            gate.Pushback = pushback;
+
+        if (TryGet(keys, "pushbackaddpos", out var pushbackAddPosS))
+            gate.PushbackAddPos = ParsePositionArray(pushbackAddPosS);
+
+        // Parse UI name
+        if (TryGet(keys, "uiname", out var uiNameS))
+            gate.UiName = uiNameS;
 
         // services referenced inline or via indexed keys
         var services = new List<GroundService>();
@@ -798,6 +847,144 @@ public class IniGsxParser
         return hasAnyPosition ? positions : null;
     }
 
+    // Helper method to parse waypoint paths from Python-style coordinate arrays
+    private WaypointPath? ParseWaypointPath(KeyCollection keys, string waypointKey, string thicknessKey)
+    {
+        if (!TryGet(keys, waypointKey, out var waypointString)) return null;
+
+        var waypoints = ParseWaypointArray(waypointString);
+        if (waypoints == null || waypoints.Count == 0) return null;
+
+        var path = new WaypointPath { Waypoints = waypoints };
+        
+        if (TryGet(keys, thicknessKey, out var thicknessS) && TryParseInvariant(thicknessS, out var thickness))
+            path.Thickness = thickness;
+
+        return path;
+    }
+
+    // Helper method to parse waypoint arrays from Python-style format: [(lat, lon, height), ...]
+    private List<Waypoint>? ParseWaypointArray(string waypointString)
+    {
+        if (string.IsNullOrWhiteSpace(waypointString)) return null;
+
+        try
+        {
+            var waypoints = new List<Waypoint>();
+            
+            // Remove outer brackets and split by coordinate tuples
+            var cleaned = waypointString.Trim().TrimStart('[').TrimEnd(']');
+            var coordPattern = @"\(\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^)]+)\s*\)";
+            var matches = Regex.Matches(cleaned, coordPattern);
+
+            foreach (Match match in matches)
+            {
+                if (match.Groups.Count >= 4)
+                {
+                    var waypoint = new Waypoint();
+                    if (TryParseInvariant(match.Groups[1].Value.Trim(), out var lat))
+                        waypoint.Latitude = lat;
+                    if (TryParseInvariant(match.Groups[2].Value.Trim(), out var lon))
+                        waypoint.Longitude = lon;
+                    if (TryParseInvariant(match.Groups[3].Value.Trim(), out var height))
+                        waypoint.Height = height;
+                    
+                    waypoints.Add(waypoint);
+                }
+            }
+
+            return waypoints.Count > 0 ? waypoints : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    // Helper method to parse 3D position with height
+    private Position3D? ParsePosition3D(string positionString)
+    {
+        if (string.IsNullOrWhiteSpace(positionString)) return null;
+
+        try
+        {
+            // Handle Python tuple format: (lat, lon, height)
+            if (positionString.StartsWith("(") && positionString.EndsWith(")"))
+            {
+                var cleaned = positionString.Trim('(', ')');
+                var parts = cleaned.Split(',').Select(p => p.Trim()).ToArray();
+                
+                if (parts.Length >= 3)
+                {
+                    var position = new Position3D();
+                    if (TryParseInvariant(parts[0], out var lat)) position.Latitude = lat;
+                    if (TryParseInvariant(parts[1], out var lon)) position.Longitude = lon;
+                    if (TryParseInvariant(parts[2], out var height)) position.Height = height;
+                    return position;
+                }
+            }
+            else
+            {
+                // Handle space-separated format: "lat lon height"
+                var parts = positionString.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 3)
+                {
+                    var position = new Position3D();
+                    if (TryParseInvariant(parts[0], out var lat)) position.Latitude = lat;
+                    if (TryParseInvariant(parts[1], out var lon)) position.Longitude = lon;
+                    if (TryParseInvariant(parts[2], out var height)) position.Height = height;
+                    return position;
+                }
+            }
+        }
+        catch
+        {
+            return null;
+        }
+        
+        return null;
+    }
+
+    // Helper method to parse position arrays
+    private List<Position>? ParsePositionArray(string positionString)
+    {
+        if (string.IsNullOrWhiteSpace(positionString)) return null;
+
+        try
+        {
+            var positions = new List<Position>();
+            
+            // Handle empty array
+            if (positionString.Trim() == "[]") return positions;
+            
+            // Handle Python list format: [pos1, pos2, ...]
+            var cleaned = positionString.Trim().TrimStart('[').TrimEnd(']');
+            if (string.IsNullOrWhiteSpace(cleaned)) return positions;
+            
+            // Split by commas but be careful about nested coordinates
+            var parts = cleaned.Split(',').Select(p => p.Trim()).ToArray();
+            
+            // Simple case: each part should be a position
+            for (int i = 0; i < parts.Length; i += 3)
+            {
+                if (i + 2 < parts.Length)
+                {
+                    var position = new Position();
+                    if (TryParseInvariant(parts[i], out var lat)) position.Latitude = lat;
+                    if (TryParseInvariant(parts[i + 1], out var lon)) position.Longitude = lon;
+                    if (TryParseInvariant(parts[i + 2], out var heading)) position.Heading = heading;
+                    positions.Add(position);
+                }
+            }
+
+            return positions.Count > 0 ? positions : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private static bool IsParsedKey(string key)
     {
         string[] parsedPrefixes = {
@@ -813,7 +1000,8 @@ public class IniGsxParser
             "pushbacktype", "pushbacklabels", "snapleftpushbackpos", "snaprightpushbackpos",
             "pushbackleftpos", "pushbackrightpos", "pushbackpos", "wingwalkers", "startengines",
             "parkingsystem_stopposition", "parkingsystem_objectposition",
-            "baggage_loader_", "baggage_train_", "stairs_"
+            "baggage_loader_", "baggage_train_", "stairs_", "walkerwaypoints", "passengerwaypoints",
+            "passengerentergatepos", "paxbarrierstexture", "pushbackaddpos", "uiname"
         };
 
         return parsedPrefixes.Any(p => key.StartsWith(p, StringComparison.OrdinalIgnoreCase));

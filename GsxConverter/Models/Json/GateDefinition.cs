@@ -117,6 +117,31 @@ public class GateDefinition
     [JsonPropertyName("stairs_positions")]
     public StairsPositions? StairsPositions { get; set; }
 
+    // Waypoint and path configurations
+    [JsonPropertyName("walker_waypoints")]
+    public WaypointPath? WalkerWaypoints { get; set; }
+
+    [JsonPropertyName("passenger_waypoints")]
+    public WaypointPath? PassengerWaypoints { get; set; }
+
+    [JsonPropertyName("passenger_enter_gate_pos")]
+    public Position3D? PassengerEnterGatePos { get; set; }
+
+    // Texture configurations
+    [JsonPropertyName("pax_barriers_texture")]
+    public string? PaxBarriersTexture { get; set; }
+
+    // Additional push-back configuration
+    [JsonPropertyName("pushback")]
+    public int? Pushback { get; set; }
+
+    [JsonPropertyName("pushback_add_pos")]
+    public List<Position>? PushbackAddPos { get; set; }
+
+    // UI and display name
+    [JsonPropertyName("ui_name")]
+    public string? UiName { get; set; }
+
     // preserve arbitrary keys not mapped above
     [JsonPropertyName("properties")]
     public Dictionary<string, string> Properties { get; set; } = new();

@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.org/gsx-groundservice.schema.json",
   "title": "Ground Service Config",
+  "description": "Unified JSON schema for GSX airport ground service configurations supporting both INI and Python source formats",
   "type": "object",
   "required": ["airport","gates"],
   "properties": {
@@ -10,55 +11,250 @@
       "description": "ICAO code of the airport"
     },
     "version": {
-      "type": "string"
+      "type": "string",
+      "default": "1.0"
     },
     "metadata": {
       "type": "object",
+      "description": "Arbitrary key-value metadata from the source configuration",
       "additionalProperties": { "type": "string" }
+    },
+    "jetway_rootfloor_heights": {
+      "type": "object",
+      "description": "Jetway root floor height configuration mapped by jetway model name",
+      "additionalProperties": { "type": "number" }
+    },
+    "deices": {
+      "type": "array",
+      "description": "De-ice area definitions",
+      "items": {
+        "$ref": "#/$defs/deice_definition"
+      }
+    },
+    "gate_groups": {
+      "type": "array",
+      "description": "Gate grouping definitions",
+      "items": {
+        "$ref": "#/$defs/gate_group"
+      }
     },
     "gates": {
       "type": "array",
       "items": {
-        "type": "object",
-        "required": ["gate_id","position"],
-        "properties": {
-          "gate_id": { "type": "string" },
-          "position": {
-            "type": "object",
-            "required": ["lat","lon"],
-            "properties": {
-              "lat": { "type": "number" },
-              "lon": { "type": "number" },
-              "heading": { "type": "number" }
-            }
-          },
-          "services": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": ["type"],
-              "properties": {
-                "type": { "type": "string" },
-                "offset": { "type": ["number","null"] },
-                "spawn_coords": {
-                  "type": ["object","null"],
-                  "properties": {
-                    "lat": { "type": "number" },
-                    "lon": { "type": "number" },
-                    "heading": { "type": "number" }
-                  }
-                },
-                "properties": {
-                  "type": "object",
-                  "additionalProperties": { "type": "string" }
-                }
-              }
-            }
-          },
-          "tags": {
-            "type": "array",
-            "items": { "type": "string" }
+        "$ref": "#/$defs/gate_definition"
+      }
+    }
+  },
+  "$defs": {
+    "position": {
+      "type": "object",
+      "required": ["lat","lon"],
+      "properties": {
+        "lat": { "type": "number" },
+        "lon": { "type": "number" },
+        "heading": { "type": "number", "default": 0 }
+      }
+    },
+    "position_3d": {
+      "allOf": [
+        { "$ref": "#/$defs/position" },
+        {
+          "properties": {
+            "height": { "type": "number" }
           }
+        }
+      ]
+    },
+    "parking_system_object_position": {
+      "allOf": [
+        { "$ref": "#/$defs/position" },
+        {
+          "properties": {
+            "height": { "type": ["number", "null"] }
+          }
+        }
+      ]
+    },
+    "waypoint": {
+      "type": "object",
+      "required": ["lat", "lon", "height"],
+      "properties": {
+        "lat": { "type": "number" },
+        "lon": { "type": "number" },
+        "height": { "type": "number" }
+      }
+    },
+    "waypoint_path": {
+      "type": "object",
+      "properties": {
+        "waypoints": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/waypoint" }
+        },
+        "thickness": { "type": ["number", "null"] }
+      }
+    },
+    "pushback_config": {
+      "type": "object",
+      "properties": {
+        "pushback_type": { "type": ["integer", "null"] },
+        "pushback_labels": {
+          "type": ["array", "null"],
+          "items": { "type": "string" }
+        },
+        "snap_left_pushback_pos": { "type": ["boolean", "null"] },
+        "snap_right_pushback_pos": { "type": ["boolean", "null"] },
+        "pushback_left_pos": { "$ref": "#/$defs/position" },
+        "pushback_right_pos": { "$ref": "#/$defs/position" },
+        "pushback_left_approach_pos": { "$ref": "#/$defs/position" },
+        "pushback_right_approach_pos": { "$ref": "#/$defs/position" },
+        "pushback_left_approach_pos2": { "$ref": "#/$defs/position" },
+        "pushback_right_approach_pos2": { "$ref": "#/$defs/position" },
+        "pushback_pos": { "$ref": "#/$defs/position" },
+        "wingwalkers_left_pushback": { "type": ["integer", "null"] },
+        "wingwalkers_right_pushback": { "type": ["integer", "null"] },
+        "wingwalkers_quick_pushback": { "type": ["integer", "null"] },
+        "start_engines_left_pushback": { "type": ["number", "null"] },
+        "start_engines_right_pushback": { "type": ["number", "null"] },
+        "start_engines_quick_pushback": { "type": ["number", "null"] }
+      }
+    },
+    "baggage_positions": {
+      "type": "object",
+      "properties": {
+        "baggage_loader_front_pos": { "$ref": "#/$defs/position" },
+        "baggage_loader_rear_pos": { "$ref": "#/$defs/position" },
+        "baggage_loader_main_pos": { "$ref": "#/$defs/position" },
+        "baggage_train_front_pos": { "$ref": "#/$defs/position" },
+        "baggage_train_rear_pos": { "$ref": "#/$defs/position" },
+        "baggage_train_main_pos": { "$ref": "#/$defs/position" }
+      }
+    },
+    "stairs_positions": {
+      "type": "object",
+      "properties": {
+        "stairs_front_pos": { "$ref": "#/$defs/position" },
+        "stairs_middle_pos": { "$ref": "#/$defs/position" },
+        "stairs_rear_pos": { "$ref": "#/$defs/position" }
+      }
+    },
+    "ground_service": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string" },
+        "offset_meters": { "type": ["number","null"] },
+        "spawn_coords": { "$ref": "#/$defs/position" },
+        "properties": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "gate_definition": {
+      "type": "object",
+      "required": ["gate_id","position"],
+      "properties": {
+        "gate_id": { "type": "string" },
+        "ui_name": { "type": ["string", "null"] },
+        "position": { "$ref": "#/$defs/position" },
+        "services": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ground_service" }
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "allowed_aircraft": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "gate_type": { "type": ["integer", "null"] },
+        "max_wingspan": { "type": ["number", "null"] },
+        "radius_left": { "type": ["number", "null"] },
+        "radius_right": { "type": ["number", "null"] },
+        "gate_distance_threshold": { "type": ["number", "null"] },
+        "has_jetway": { "type": ["boolean", "null"] },
+        "parking_system": { "type": ["string", "null"] },
+        "underground_refueling": { "type": ["boolean", "null"] },
+        "no_passenger_stairs": { "type": ["boolean", "null"] },
+        "no_passenger_bus": { "type": ["boolean", "null"] },
+        "no_passenger_bus_deboarding": { "type": ["boolean", "null"] },
+        "ignore_icao_prefixes": { "type": ["boolean", "null"] },
+        "ignore_preferred_exit": { "type": ["boolean", "null"] },
+        "dont_create_jetways": { "type": ["boolean", "null"] },
+        "disable_pax_barriers": { "type": ["boolean", "null"] },
+        "disable_pax_barriers_deboarding": { "type": ["boolean", "null"] },
+        "user_customized": { "type": ["boolean", "null"] },
+        "loader_type": { "type": ["string", "null"] },
+        "airline_codes": { "type": ["string", "null"] },
+        "handling_texture": {
+          "type": ["array", "null"],
+          "items": { "type": "string" }
+        },
+        "catering_texture": {
+          "type": ["array", "null"],
+          "items": { "type": "string" }
+        },
+        "walker_type": { "type": ["string", "null"] },
+        "walker_path_thickness": { "type": ["number", "null"] },
+        "walker_loop_start": { "type": ["integer", "null"] },
+        "passenger_path_thickness": { "type": ["number", "null"] },
+        "passenger_path_thickness_deboarding": { "type": ["number", "null"] },
+        "pushback_config": { "$ref": "#/$defs/pushback_config" },
+        "parking_system_stop_position": { "$ref": "#/$defs/position" },
+        "parking_system_object_position": { "$ref": "#/$defs/parking_system_object_position" },
+        "baggage_positions": { "$ref": "#/$defs/baggage_positions" },
+        "stairs_positions": { "$ref": "#/$defs/stairs_positions" },
+        "walker_waypoints": { "$ref": "#/$defs/waypoint_path" },
+        "passenger_waypoints": { "$ref": "#/$defs/waypoint_path" },
+        "passenger_enter_gate_pos": { "$ref": "#/$defs/position_3d" },
+        "pax_barriers_texture": { "type": ["string", "null"] },
+        "pushback": { "type": ["integer", "null"] },
+        "pushback_add_pos": {
+          "type": ["array", "null"],
+          "items": { "$ref": "#/$defs/position" }
+        },
+        "properties": {
+          "type": "object",
+          "description": "Additional properties not explicitly modeled",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "deice_definition": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string" },
+        "ui_name": { "type": ["string", "null"] },
+        "type": { "type": ["string", "null"] },
+        "is_deice_area": { "type": ["boolean", "null"] },
+        "position": { "$ref": "#/$defs/position" },
+        "parking_system": { "type": ["string", "null"] },
+        "radius": { "type": ["number", "null"] },
+        "parking_system_stop_position": { "$ref": "#/$defs/position" },
+        "parking_system_object_position": { "$ref": "#/$defs/parking_system_object_position" },
+        "user_customized": { "type": ["boolean", "null"] },
+        "properties": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "gate_group": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string" },
+        "members": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
         }
       }
     }
