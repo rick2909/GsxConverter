@@ -55,8 +55,19 @@ internal class Program
                     break;
                     
                 case ".py":
-                    var pythonParser = new PythonGsxParser();
-                    config = pythonParser.ParseFile(input);
+                    // For Python inputs, require a sibling INI file as base (same filename, .ini extension).
+                    var pyParser = new PythonGsxParser();
+                    var pyCfg = pyParser.ParseFile(input);
+
+                    var baseIni = Path.ChangeExtension(input, ".ini");
+                    if (!File.Exists(baseIni))
+                    {
+                        Console.Error.WriteLine($"Missing base INI file required for Python override: {baseIni}");
+                        return 5;
+                    }
+
+                    var baseCfg = new IniGsxParser().ParseFile(baseIni);
+                    config = ConfigMerger.Merge(baseCfg, pyCfg);
                     break;
                     
                 default:

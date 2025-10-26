@@ -16,9 +16,10 @@ public class GateDefinition
     [JsonPropertyName("tags")]
     public List<string> Tags { get; set; } = new();
     
-    // allowed aircraft templates (if present)
-    [JsonPropertyName("allowed_aircraft")]
-    public List<string> AllowedAircraft { get; set; } = new();
+    // Aircraft-specific custom stop positions coming from the Python functions table
+    // Key: aircraft ICAO (e.g., A20N, B738), Value: stop distance (meters)
+    [JsonPropertyName("aircraft_stop_positions")]
+    public Dictionary<string, double> AircraftStopPositions { get; set; } = new();
 
     // GSX-specific gate properties
     [JsonPropertyName("gate_type")]

@@ -310,12 +310,6 @@ public class IniGsxParser
             if (int.TryParse(gateType, out var typeNum)) gate.GateType = typeNum;
         }
 
-        // allowed aircraft lists
-        if (TryGet(keys, "allowed_aircraft", out var allowed) || TryGet(keys, "allowedaircraft", out allowed))
-        {
-            foreach (var a in SplitList(allowed)) gate.AllowedAircraft.Add(a);
-        }
-
         // Map GSX gate properties to structured fields
         if (TryGet(keys, "maxwingspan", out var wingspanS) && TryParseInvariant(wingspanS, out var wingspan))
             gate.MaxWingspan = wingspan;

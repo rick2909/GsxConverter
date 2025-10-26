@@ -15,6 +15,8 @@ public class PythonGsxParser
     private static readonly Regex GateDefRegex = new Regex(@"def\s+(\w+)\s*\(", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex PositionRegex = new Regex(@"\(\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^)]+)\s*\)", RegexOptions.Compiled);
     private static readonly Regex WaypointArrayRegex = new Regex(@"\[\s*(\([^]]+\)(?:\s*,\s*\([^]]+\))*)\s*\]", RegexOptions.Compiled);
+    private static readonly Regex DictRegex = new Regex(@"\{\s*([^}]*)\s*\}", RegexOptions.Singleline | RegexOptions.Compiled);
+    private static readonly Regex DictPairRegex = new Regex(@"(['""])(?<key>[^'""]+)\1\s*:\s*(?<val>-?\d+(?:\.\d+)?)", RegexOptions.Compiled);
     
     public GroundServiceConfig ParseFile(string path)
     {
@@ -178,6 +180,17 @@ public class PythonGsxParser
                 gate.PassengerEnterGatePos = ParsePosition3DFromValue(value);
                 break;
 
+            // Aircraft stop positions table (dict): keys are ICAO codes, values are numeric stop distances
+            case "functions":
+            case "stops":
+            case "stop_positions":
+            case "aircraft_stop_positions":
+            case "custom_stop_positions":
+                var dict = ParseStringDoubleDict(value);
+                if (dict != null && dict.Count > 0)
+                    gate.AircraftStopPositions = dict;
+                break;
+
             default:
                 // Store unknown properties
                 gate.Properties[property] = CleanStringValue(value);
@@ -243,6 +256,26 @@ public class PythonGsxParser
         }
 
         return null;
+    }
+
+    private Dictionary<string,double>? ParseStringDoubleDict(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        var m = DictRegex.Match(value);
+        if (!m.Success) return null;
+
+        var body = m.Groups[1].Value;
+        var dict = new Dictionary<string,double>(StringComparer.OrdinalIgnoreCase);
+        foreach (Match pair in DictPairRegex.Matches(body))
+        {
+            var key = pair.Groups["key"].Value.Trim();
+            var valS = pair.Groups["val"].Value.Trim();
+            if (TryParseDouble(valS, out var d))
+            {
+                dict[key] = d;
+            }
+        }
+        return dict.Count > 0 ? dict : null;
     }
 
     private bool? ParsePythonBoolean(string value)

@@ -7,8 +7,9 @@
   <ContentPage.Content>
     <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" ColumnDefinitions="*" Padding="10" RowSpacing="8">
       <HorizontalStackLayout Grid.Row="0" Spacing="8">
-        <Button Text="Open INI..." Clicked="OnOpenIniClicked" />
+        <Button Text="Open GSX File..." Clicked="OnOpenGsxFileClicked" />
         <Button Text="Convert" Clicked="OnConvertClicked" />
+        <Label x:Name="FileTypeLabel" Text="" VerticalOptions="Center" FontAttributes="Italic" />
       </HorizontalStackLayout>
 
       <!-- Top: show the jetway_rootfloor_heights config (if present) -->
@@ -38,15 +39,19 @@
       <Grid Grid.Row="3" ColumnDefinitions="300,8,*">
         <StackLayout Grid.Column="0">
           <Label Text="Parsed Gates" FontAttributes="Bold" />
-          <CollectionView x:Name="GatesCollection" SelectionMode="None" HeightRequest="500">
+          <CollectionView x:Name="GatesCollection" SelectionMode="Single" SelectionChanged="OnGateSelectionChanged" HeightRequest="500">
             <CollectionView.ItemTemplate>
               <DataTemplate x:DataType="json:GateDefinition">
-                <Border Padding="8" Margin="4">
+                <Border Padding="8" Margin="4" BackgroundColor="LightGray">
                   <StackLayout>
                     <Label Text="{Binding GateId}" FontAttributes="Bold"/>
-                    <Label Text="{Binding Position.Latitude, StringFormat='Lat: {0:F6}'}" />
-                    <Label Text="{Binding Position.Longitude, StringFormat='Lon: {0:F6}'}" />
-                    <Label Text="{Binding Services.Count, StringFormat='Services: {0}'}" />
+                    <Label Text="{Binding Position.Latitude, StringFormat='Lat: {0:F6}'}" FontSize="Small" />
+                    <Label Text="{Binding Position.Longitude, StringFormat='Lon: {0:F6}'}" FontSize="Small" />
+                    <Label Text="{Binding Services.Count, StringFormat='Services: {0}'}" FontSize="Small" />
+                    <StackLayout Orientation="Horizontal" Spacing="4">
+                      <Label Text="Jetway" FontSize="Micro" BackgroundColor="Green" TextColor="White" Padding="2" IsVisible="{Binding HasJetway}" />
+                      <Label Text="Waypoints" FontSize="Micro" BackgroundColor="Blue" TextColor="White" Padding="2" x:Name="WaypointsLabel" />
+                    </StackLayout>
                   </StackLayout>
                 </Border>
               </DataTemplate>

@@ -18,13 +18,21 @@ namespace UI.Maui.Pages
             DeIceCollection.ItemsSource = new ObservableCollection<DeIceDefinition>();
         }
 
-        async void OnOpenIniClicked(object? sender, EventArgs e)
+        async void OnOpenGsxFileClicked(object? sender, EventArgs e)
         {
             try
             {
+                var customFileType = new FilePickerFileType(
+                    new Dictionary<DevicePlatform, IEnumerable<string>>
+                    {
+                        { DevicePlatform.WinUI, new[] { ".ini", ".py" } },
+                        { DevicePlatform.macOS, new[] { "ini", "py" } },
+                    });
+
                 var result = await FilePicker.PickAsync(new PickOptions
                 {
-                    PickerTitle = "Select GSX INI file",
+                    PickerTitle = "Select GSX Configuration File",
+                    FileTypes = customFileType,
                 });
 
                 if (result == null)
@@ -44,6 +52,15 @@ namespace UI.Maui.Pages
 
                 _inputTempPath = tempPath;
                 OutputPathEntry.Text = Path.Combine(Path.GetDirectoryName(_inputTempPath) ?? FileSystem.AppDataDirectory, Path.GetFileNameWithoutExtension(_inputTempPath) + ".canonical.json");
+
+                // Update file type display
+                var extension = Path.GetExtension(fileName).ToLowerInvariant();
+                FileTypeLabel.Text = extension switch
+                {
+                    ".ini" => "GSX INI Format",
+                    ".py" => "GSX Python Format", 
+                    _ => "Unknown Format"
+                };
 
                 StatusLabel.Text = $"Loaded {fileName}";
                 ParseAndDisplay(_inputTempPath);
@@ -72,8 +89,12 @@ namespace UI.Maui.Pages
             try
             {
                 // Parse on a background thread because parsing can be CPU-bound
-                var cfg = await Task.Run(() => new IniGsxParser().ParseFile(_inputTempPath));
-                var opt = new JsonSerializerOptions { WriteIndented = true };
+                var cfg = await Task.Run(() => ParseGsxFile(_inputTempPath));
+                var opt = new JsonSerializerOptions 
+                { 
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
                 var json = JsonSerializer.Serialize(cfg, opt);
 
                 // Ensure directory exists
@@ -82,7 +103,7 @@ namespace UI.Maui.Pages
 
                 await File.WriteAllTextAsync(output, json);
                 JsonPreviewEditor.Text = json;
-                StatusLabel.Text = $"Saved to {output}";
+                StatusLabel.Text = $"Saved to {output} (Airport: {cfg.AirportIcao}, Gates: {cfg.Gates.Count})";
             }
             catch (Exception ex)
             {
@@ -90,18 +111,43 @@ namespace UI.Maui.Pages
             }
         }
 
+        GroundServiceConfig ParseGsxFile(string path)
+        {
+            var extension = Path.GetExtension(path).ToLowerInvariant();
+
+            if (extension == ".ini")
+                return new IniGsxParser().ParseFile(path);
+
+            if (extension == ".py")
+            {
+                // Python config must have a sibling INI file with the same basename
+                var iniPath = Path.ChangeExtension(path, ".ini");
+                if (!File.Exists(iniPath))
+                    throw new FileNotFoundException($"Base INI file not found for Python override: {iniPath}");
+
+                var baseCfg = new IniGsxParser().ParseFile(iniPath);
+                var pyCfg = new PythonGsxParser().ParseFile(path);
+                return ConfigMerger.Merge(baseCfg, pyCfg);
+            }
+
+            throw new NotSupportedException($"Unsupported file format: {extension}");
+        }
+
         void ParseAndDisplay(string path)
         {
             try
             {
-                var parser = new IniGsxParser();
-                var cfg = parser.ParseFile(path);
+                var cfg = ParseGsxFile(path);
 
                 _gates.Clear();
                 foreach (var g in cfg.Gates.Take(500))
                     _gates.Add(g);
 
-                var opt = new JsonSerializerOptions { WriteIndented = true };
+                var opt = new JsonSerializerOptions 
+                { 
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase 
+                };
                 JsonPreviewEditor.Text = JsonSerializer.Serialize(cfg, opt);
 
                 // Build a top-of-UI friendly representation of the jetway_rootfloor_heights section
@@ -125,15 +171,53 @@ namespace UI.Maui.Pages
                     foreach (var d in cfg.DeIces) deiceList.Add(d);
                 }
 
-                // Show de-ice count in status message for immediate feedback
-                var diCount = cfg.DeIces.Count;
-                StatusLabel.Text = $"Parsed {cfg.Gates.Count} gates. DeIce entries: {diCount}";
+                // Show comprehensive status with enhanced model features
+                var extension = Path.GetExtension(path).ToLowerInvariant();
+                var formatName = extension switch
+                {
+                    ".ini" => "INI",
+                    ".py" => "Python",
+                    _ => "Unknown"
+                };
+
+                var hasWaypoints = cfg.Gates.Any(g => g.WalkerWaypoints != null || g.PassengerWaypoints != null);
+                var waypointInfo = hasWaypoints ? " (with waypoints)" : "";
+                
+                StatusLabel.Text = $"Parsed {formatName}: {cfg.Gates.Count} gates, {cfg.DeIces.Count} deice areas{waypointInfo}";
             }
             catch (Exception ex)
             {
                 StatusLabel.Text = "Parse error: " + ex.Message;
                 JsonPreviewEditor.Text = ex.ToString();
                 ConfigEditor.Text = string.Empty;
+            }
+        }
+
+        void OnGateSelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (e.CurrentSelection.FirstOrDefault() is GateDefinition selectedGate)
+            {
+                // Show detailed gate information in JSON preview
+                var options = new JsonSerializerOptions 
+                { 
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+                
+                var gateJson = JsonSerializer.Serialize(selectedGate, options);
+                JsonPreviewEditor.Text = $"Selected Gate: {selectedGate.GateId}\n\n{gateJson}";
+                
+                // Update status with enhanced features
+                var features = new List<string>();
+                if (selectedGate.HasJetway == true) features.Add("Jetway");
+                if (selectedGate.WalkerWaypoints?.Waypoints.Count > 0) features.Add($"Walker waypoints ({selectedGate.WalkerWaypoints.Waypoints.Count})");
+                if (selectedGate.PassengerWaypoints?.Waypoints.Count > 0) features.Add($"Passenger waypoints ({selectedGate.PassengerWaypoints.Waypoints.Count})");
+                if (selectedGate.PassengerEnterGatePos != null) features.Add("3D passenger entry");
+                if (selectedGate.BaggagePositions != null) features.Add("Baggage positions");
+                if (selectedGate.PushbackConfig != null) features.Add("Pushback config");
+                
+                var featureText = features.Count > 0 ? $" - Features: {string.Join(", ", features)}" : "";
+                StatusLabel.Text = $"Gate {selectedGate.GateId}: {selectedGate.Services.Count} services{featureText}";
             }
         }
     }
