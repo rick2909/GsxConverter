@@ -152,7 +152,8 @@ namespace UI.Maui.Pages
 
                 await File.WriteAllTextAsync(output, json);
                 JsonPreviewLabel.Text = json;
-                StatusLabel.Text = $"Saved to {output} (Airport: {cfg.AirportIcao}, Gates: {cfg.Gates.Count})";
+                var groupsText = cfg.GateGroups.Count > 0 ? $", Groups: {cfg.GateGroups.Count}" : "";
+                StatusLabel.Text = $"Saved to {output} (Airport: {cfg.AirportIcao}, Gates: {cfg.Gates.Count}{groupsText})";
             }
             catch (Exception ex)
             {
@@ -232,8 +233,9 @@ namespace UI.Maui.Pages
 
                 var hasWaypoints = cfg.Gates.Any(g => g.WalkerWaypoints != null || g.PassengerWaypoints != null);
                 var waypointInfo = hasWaypoints ? " 🚶 with waypoints" : "";
+                var groupsInfo = cfg.GateGroups.Count > 0 ? $", {cfg.GateGroups.Count} gate groups" : "";
                 
-                StatusLabel.Text = $"✅ Parsed {formatName}: {cfg.Gates.Count} gates, {cfg.DeIces.Count} deice areas{waypointInfo}";
+                StatusLabel.Text = $"✅ Parsed {formatName}: {cfg.Gates.Count} gates, {cfg.DeIces.Count} deice areas{groupsInfo}{waypointInfo}";
             }
             catch (Exception ex)
             {

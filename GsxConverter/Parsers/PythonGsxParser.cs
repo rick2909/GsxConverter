@@ -259,6 +259,29 @@ public class PythonGsxParser
                 }
             }
         }
+
+        // Build GateGroups from parsed gates with group_name property
+        var groupMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var gate in cfg.Gates)
+        {
+            if (gate.Properties.TryGetValue("group_name", out var groupName) && !string.IsNullOrEmpty(groupName))
+            {
+                if (!groupMap.ContainsKey(groupName))
+                {
+                    groupMap[groupName] = new List<string>();
+                }
+                groupMap[groupName].Add(gate.GateId);
+            }
+        }
+
+        foreach (var kvp in groupMap.OrderBy(g => g.Key))
+        {
+            cfg.GateGroups.Add(new GateGroup
+            {
+                Id = kvp.Key,
+                Members = kvp.Value
+            });
+        }
     }
 
     private Dictionary<string, StopPositionsEntry>? ExtractFunctionStopTables(string funcName, string fileText)
