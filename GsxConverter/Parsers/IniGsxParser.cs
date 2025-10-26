@@ -3,7 +3,8 @@ using System.Text.RegularExpressions;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using GsxConverter.Models;
+using GsxConverter.Models.Json;
+using System.Reflection;
 
 namespace GsxConverter.Parsers;
 
@@ -15,6 +16,8 @@ namespace GsxConverter.Parsers;
 ///  - typed parsing for [jetway_rootfloor_heights]
 ///  - top-level DeIce objects for DeIce* sections
 ///  - more robust gate section name detection (supports "Gate_", "Gate ", "Gate-")
+///  - per-service indexed keys (service_1, service_1_offset, service_1_spawn_lat etc.)
+///  - stricter mapping so only genuinely unknown keys are preserved
 /// </summary>
 public class IniGsxParser
 {
@@ -22,6 +25,8 @@ public class IniGsxParser
     private static readonly Regex GateRegex = new Regex(@"^(Gate|Stand|Parking)[\s_\-:]*(.+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex DeIceRegex = new Regex(@"^de[-_]?ice", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex GateGroupRegex = new Regex(@"^GateGroup[\s_\-:]*(.+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex ServiceIndexRegex = new Regex(@"^service[_\s\-]?(\d+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex ServiceIndexedKeyRegex = new Regex(@"^service[_\s\-]?(\d+)[_\s\-:](.+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public GroundServiceConfig ParseFile(string path)
     {
@@ -240,23 +245,44 @@ public class IniGsxParser
 
         var gate = new GateDefinition { GateId = gateId };
 
-        // Position fields
-        if (TryGet(keys, "lat", out var latS) && TryParseInvariant(latS, out var lat)) gate.Position.Latitude = lat;
-        if (TryGet(keys, "lon", out var lonS) && TryParseInvariant(lonS, out var lon)) gate.Position.Longitude = lon;
-        if (TryGet(keys, "heading", out var hS) && TryParseInvariant(hS, out var heading)) gate.Position.Heading = heading;
-
-        // fallback spawn coords if lat/lon missing
-        if ((gate.Position.Latitude == 0 && gate.Position.Longitude == 0) &&
-            (TryGet(keys, "spawn_lat", out var sLat) || TryGet(keys, "spawn_latitude", out sLat)))
+        // Position fields - first try this_parking_pos (GSX format: "lat lon heading")
+        if (TryGet(keys, "this_parking_pos", out var parkingPos))
         {
-            if (TryParseInvariant(sLat, out var lat2)) gate.Position.Latitude = lat2;
-            if (TryGet(keys, "spawn_lon", out var sLon) && TryParseInvariant(sLon, out var lon2)) gate.Position.Longitude = lon2;
-            if (TryGet(keys, "spawn_heading", out var sH) && TryParseInvariant(sH, out var h2)) gate.Position.Heading = h2;
+            var parts = parkingPos.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 3)
+            {
+                if (TryParseInvariant(parts[0], out var lat)) gate.Position.Latitude = lat;
+                if (TryParseInvariant(parts[1], out var lon)) gate.Position.Longitude = lon;
+                if (TryParseInvariant(parts[2], out var heading)) gate.Position.Heading = heading;
+            }
+        }
+        else
+        {
+            // Fallback to individual lat/lon/heading fields
+            if (TryGet(keys, "lat", out var latS) && TryParseInvariant(latS, out var lat)) gate.Position.Latitude = lat;
+            if (TryGet(keys, "lon", out var lonS) && TryParseInvariant(lonS, out var lon)) gate.Position.Longitude = lon;
+            if (TryGet(keys, "heading", out var hS) && TryParseInvariant(hS, out var heading)) gate.Position.Heading = heading;
+
+            // fallback spawn coords if lat/lon missing
+            if ((gate.Position.Latitude == 0 && gate.Position.Longitude == 0) &&
+                (TryGet(keys, "spawn_lat", out var sLat) || TryGet(keys, "spawn_latitude", out sLat)))
+            {
+                if (TryParseInvariant(sLat, out var lat2)) gate.Position.Latitude = lat2;
+                if (TryGet(keys, "spawn_lon", out var sLon) && TryParseInvariant(sLon, out var lon2)) gate.Position.Longitude = lon2;
+                if (TryGet(keys, "spawn_heading", out var sH) && TryParseInvariant(sH, out var h2)) gate.Position.Heading = h2;
+            }
         }
 
         // tags/categories
         if (TryGet(keys, "tags", out var tags)) gate.Tags.AddRange(SplitList(tags));
         if (TryGet(keys, "category", out var cat) && !string.IsNullOrWhiteSpace(cat)) gate.Tags.Add(cat);
+        
+        // GSX-specific type mapping to tags and direct property
+        if (TryGet(keys, "type", out var gateType) && !string.IsNullOrWhiteSpace(gateType))
+        {
+            gate.Tags.Add($"type_{gateType}");
+            if (int.TryParse(gateType, out var typeNum)) gate.GateType = typeNum;
+        }
 
         // allowed aircraft lists
         if (TryGet(keys, "allowed_aircraft", out var allowed) || TryGet(keys, "allowedaircraft", out allowed))
@@ -264,19 +290,148 @@ public class IniGsxParser
             foreach (var a in SplitList(allowed)) gate.AllowedAircraft.Add(a);
         }
 
-        // services referenced inline
+        // Map GSX gate properties to structured fields
+        if (TryGet(keys, "maxwingspan", out var wingspanS) && TryParseInvariant(wingspanS, out var wingspan))
+            gate.MaxWingspan = wingspan;
+        
+        if (TryGet(keys, "radiusleft", out var radiusLeftS) && TryParseInvariant(radiusLeftS, out var radiusLeft))
+            gate.RadiusLeft = radiusLeft;
+        
+        if (TryGet(keys, "radiusright", out var radiusRightS) && TryParseInvariant(radiusRightS, out var radiusRight))
+            gate.RadiusRight = radiusRight;
+        
+        if (TryGet(keys, "gatedistancethreshold", out var gateDistS) && TryParseInvariant(gateDistS, out var gateDist))
+            gate.GateDistanceThreshold = gateDist;
+        
+        if (TryGet(keys, "hasjetway", out var hasJetwayS))
+            gate.HasJetway = ParseGsxBoolean(hasJetwayS);
+        
+        if (TryGet(keys, "parkingsystem", out var parkingSystemS))
+            gate.ParkingSystem = parkingSystemS;
+        
+        if (TryGet(keys, "undergroundrefueling", out var undergroundRefS))
+            gate.UndergroundRefueling = ParseGsxBoolean(undergroundRefS);
+        
+        if (TryGet(keys, "nopassengerstairs", out var noStairsS))
+            gate.NoPassengerStairs = ParseGsxBoolean(noStairsS);
+        
+        if (TryGet(keys, "nopassengerbus", out var noBusS))
+            gate.NoPassengerBus = ParseGsxBoolean(noBusS);
+        
+        if (TryGet(keys, "nopassengerbus_deboarding", out var noBusDebS))
+            gate.NoPassengerBusDebording = ParseGsxBoolean(noBusDebS);
+        
+        if (TryGet(keys, "ignoreicaoprefixes", out var ignoreIcaoS))
+            gate.IgnoreIcaoPrefixes = ParseGsxBoolean(ignoreIcaoS);
+        
+        if (TryGet(keys, "ignorepreferredexit", out var ignorePrefExitS))
+            gate.IgnorePreferredExit = ParseGsxBoolean(ignorePrefExitS);
+        
+        if (TryGet(keys, "dontcreatejetways", out var dontCreateJetwaysS))
+            gate.DontCreateJetways = ParseGsxBoolean(dontCreateJetwaysS);
+        
+        if (TryGet(keys, "disablepaxbarriers", out var disablePaxS))
+            gate.DisablePaxBarriers = ParseGsxBoolean(disablePaxS);
+        
+        if (TryGet(keys, "disablepaxbarriers_deboarding", out var disablePaxDebS))
+            gate.DisablePaxBarriersDebording = ParseGsxBoolean(disablePaxDebS);
+        
+        if (TryGet(keys, "usercustomized", out var userCustomS))
+            gate.UserCustomized = ParseGsxBoolean(userCustomS);
+        
+        if (TryGet(keys, "loadertype", out var loaderTypeS))
+            gate.LoaderType = loaderTypeS;
+        
+        if (TryGet(keys, "airlinecodes", out var airlineCodesS))
+            gate.AirlineCodes = airlineCodesS;
+        
+        if (TryGet(keys, "handlingtexture", out var handlingTextureS))
+            gate.HandlingTexture = SplitList(handlingTextureS).ToList();
+        
+        if (TryGet(keys, "cateringtexture", out var cateringTextureS))
+            gate.CateringTexture = SplitList(cateringTextureS).ToList();
+        
+        if (TryGet(keys, "walkertype", out var walkerTypeS))
+            gate.WalkerType = walkerTypeS;
+        
+        if (TryGet(keys, "walkerpaththickness", out var walkerPathS) && TryParseInvariant(walkerPathS, out var walkerPath))
+            gate.WalkerPathThickness = walkerPath;
+        
+        if (TryGet(keys, "walkerloopstart", out var walkerLoopS) && int.TryParse(walkerLoopS, out var walkerLoop))
+            gate.WalkerLoopStart = walkerLoop;
+        
+        if (TryGet(keys, "passengerpaththickness", out var passengerPathS) && TryParseInvariant(passengerPathS, out var passengerPath))
+            gate.PassengerPathThickness = passengerPath;
+        
+        if (TryGet(keys, "passengerpaththickness_deboarding", out var passengerPathDebS) && TryParseInvariant(passengerPathDebS, out var passengerPathDeb))
+            gate.PassengerPathThicknessDebording = passengerPathDeb;
+
+        // Parse pushback configuration
+        gate.PushbackConfig = ParsePushbackConfig(keys);
+
+        // Parse parking system positions
+        if (TryGet(keys, "parkingsystem_stopposition", out var stopPosS))
+            gate.ParkingSystemStopPosition = ParsePosition(stopPosS);
+        
+        if (TryGet(keys, "parkingsystem_objectposition", out var objPosS))
+            gate.ParkingSystemObjectPosition = ParseParkingSystemObjectPosition(objPosS);
+
+        // Parse equipment positions
+        gate.BaggagePositions = ParseBaggagePositions(keys);
+        gate.StairsPositions = ParseStairsPositions(keys);
+
+        // services referenced inline or via indexed keys
         var services = new List<GroundService>();
+        // Collect indexed service references (service_1 = GndService_Pushback)
+        var indexedServiceRefs = new Dictionary<int, string>();
+        var indexedServiceOverrides = new Dictionary<int, Dictionary<string,string>>();
         foreach (var k in keys)
         {
-            if (k.KeyName.StartsWith("service_", StringComparison.OrdinalIgnoreCase))
+            var m = ServiceIndexRegex.Match(k.KeyName);
+            if (m.Success)
             {
-                var svcRef = k.Value.Trim();
-                if (string.IsNullOrEmpty(svcRef)) continue;
-                if (globalServices.TryGetValue(svcRef, out var gs))
-                    services.Add(CloneService(gs));
-                else
-                    services.Add(new GroundService { Type = svcRef });
+                if (int.TryParse(m.Groups[1].Value, out var idx))
+                {
+                    indexedServiceRefs[idx] = k.Value.Trim();
+                }
+                continue;
             }
+            var m2 = ServiceIndexedKeyRegex.Match(k.KeyName);
+            if (m2.Success)
+            {
+                if (int.TryParse(m2.Groups[1].Value, out var idx))
+                {
+                    var sub = m2.Groups[2].Value.Trim();
+                    if (!indexedServiceOverrides.TryGetValue(idx, out var d)) { d = new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase); indexedServiceOverrides[idx] = d; }
+                    d[sub] = k.Value.Trim();
+                }
+                continue;
+            }
+        }
+
+        // Build service objects from indexed refs and overrides
+        foreach (var kv in indexedServiceRefs.OrderBy(k => k.Key))
+        {
+            var idx = kv.Key;
+            var refName = kv.Value;
+            GroundService svc;
+            if (!string.IsNullOrEmpty(refName) && globalServices.TryGetValue(refName, out var gs)) svc = CloneService(gs);
+            else svc = new GroundService { Type = refName };
+
+            if (indexedServiceOverrides.TryGetValue(idx, out var ov))
+            {
+                if (ov.TryGetValue("offset", out var offS) && TryParseInvariant(offS, out var off)) svc.OffsetMeters = off;
+                if (ov.TryGetValue("offset_meters", out var offm) && TryParseInvariant(offm, out off)) svc.OffsetMeters = off;
+                var spawn = new Position(); var hasSpawn = false;
+                if (ov.TryGetValue("spawn_lat", out var sl) && TryParseInvariant(sl, out var parsedLat)) { spawn.Latitude = parsedLat; hasSpawn = true; }
+                if (ov.TryGetValue("spawn_lon", out var slon) && TryParseInvariant(slon, out var parsedLon)) { spawn.Longitude = parsedLon; hasSpawn = true; }
+                if (ov.TryGetValue("spawn_heading", out var sh) && TryParseInvariant(sh, out var parsedHeading)) { spawn.Heading = parsedHeading; hasSpawn = true; }
+                if (hasSpawn) svc.SpawnCoords = spawn;
+                // copy any remaining override props
+                foreach (var p in ov) svc.Properties[p.Key] = p.Value;
+            }
+
+            services.Add(svc);
         }
 
         // explicit per-section service fields (serviceType, offset, spawn_lat etc.)
@@ -418,12 +573,247 @@ public class IniGsxParser
         };
     }
 
+    // Helper method to parse position strings (format: "lat lon heading" or "lat lon heading height")
+    private static Position? ParsePosition(string positionString)
+    {
+        if (string.IsNullOrWhiteSpace(positionString)) return null;
+        
+        var parts = positionString.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 3) return null;
+
+        var position = new Position();
+        if (TryParseInvariant(parts[0], out var lat)) position.Latitude = lat;
+        if (TryParseInvariant(parts[1], out var lon)) position.Longitude = lon;
+        if (TryParseInvariant(parts[2], out var heading)) position.Heading = heading;
+        
+        return position;
+    }
+
+    // Helper method to parse parking system object position (format: "lat lon heading height")
+    private static ParkingSystemObjectPosition? ParseParkingSystemObjectPosition(string positionString)
+    {
+        if (string.IsNullOrWhiteSpace(positionString)) return null;
+        
+        var parts = positionString.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 3) return null;
+
+        var position = new ParkingSystemObjectPosition();
+        if (TryParseInvariant(parts[0], out var lat)) position.Latitude = lat;
+        if (TryParseInvariant(parts[1], out var lon)) position.Longitude = lon;
+        if (TryParseInvariant(parts[2], out var heading)) position.Heading = heading;
+        if (parts.Length >= 4 && TryParseInvariant(parts[3], out var height)) position.Height = height;
+        
+        return position;
+    }
+
+    // Helper method to parse boolean from various GSX boolean representations
+    private static bool? ParseGsxBoolean(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        return IsTrueValue(value);
+    }
+
+    // Helper method to parse pushback configuration
+    private PushbackConfig? ParsePushbackConfig(KeyCollection keys)
+    {
+        var config = new PushbackConfig();
+        bool hasAnyPushbackData = false;
+
+        if (TryGet(keys, "pushbacktype", out var pushbackTypeS) && int.TryParse(pushbackTypeS, out var pushbackType))
+        {
+            config.PushbackType = pushbackType;
+            hasAnyPushbackData = true;
+        }
+
+        if (TryGet(keys, "pushbacklabels", out var labelsS))
+        {
+            config.PushbackLabels = labelsS.Split('|').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+            hasAnyPushbackData = true;
+        }
+
+        if (TryGet(keys, "snapleftpushbackpos", out var snapLeftS))
+        {
+            config.SnapLeftPushbackPos = ParseGsxBoolean(snapLeftS);
+            hasAnyPushbackData = true;
+        }
+
+        if (TryGet(keys, "snaprightpushbackpos", out var snapRightS))
+        {
+            config.SnapRightPushbackPos = ParseGsxBoolean(snapRightS);
+            hasAnyPushbackData = true;
+        }
+
+        if (TryGet(keys, "pushbackleftpos", out var leftPosS))
+        {
+            config.PushbackLeftPos = ParsePosition(leftPosS);
+            hasAnyPushbackData = true;
+        }
+
+        if (TryGet(keys, "pushbackrightpos", out var rightPosS))
+        {
+            config.PushbackRightPos = ParsePosition(rightPosS);
+            hasAnyPushbackData = true;
+        }
+
+        if (TryGet(keys, "pushbackleftapproachpos", out var leftApproachS))
+        {
+            config.PushbackLeftApproachPos = ParsePosition(leftApproachS);
+            hasAnyPushbackData = true;
+        }
+
+        if (TryGet(keys, "pushbackrightapproachpos", out var rightApproachS))
+        {
+            config.PushbackRightApproachPos = ParsePosition(rightApproachS);
+            hasAnyPushbackData = true;
+        }
+
+        if (TryGet(keys, "pushbackleftapproachpos2", out var leftApproach2S))
+        {
+            config.PushbackLeftApproachPos2 = ParsePosition(leftApproach2S);
+            hasAnyPushbackData = true;
+        }
+
+        if (TryGet(keys, "pushbackrightapproachpos2", out var rightApproach2S))
+        {
+            config.PushbackRightApproachPos2 = ParsePosition(rightApproach2S);
+            hasAnyPushbackData = true;
+        }
+
+        if (TryGet(keys, "pushback_pos", out var pushbackPosS))
+        {
+            config.PushbackPos = ParsePosition(pushbackPosS);
+            hasAnyPushbackData = true;
+        }
+
+        // Wingwalkers configuration
+        if (TryGet(keys, "wingwalkersleftpushback", out var wingLeftS) && int.TryParse(wingLeftS, out var wingLeft))
+        {
+            config.WingwalkersLeftPushback = wingLeft;
+            hasAnyPushbackData = true;
+        }
+
+        if (TryGet(keys, "wingwalkersrightpushback", out var wingRightS) && int.TryParse(wingRightS, out var wingRight))
+        {
+            config.WingwalkersRightPushback = wingRight;
+            hasAnyPushbackData = true;
+        }
+
+        if (TryGet(keys, "wingwalkersquickpushback", out var wingQuickS) && int.TryParse(wingQuickS, out var wingQuick))
+        {
+            config.WingwalkersQuickPushback = wingQuick;
+            hasAnyPushbackData = true;
+        }
+
+        // Engine start configuration
+        if (TryGet(keys, "startenginesleftpushback", out var engineLeftS) && TryParseInvariant(engineLeftS, out var engineLeft))
+        {
+            config.StartEnginesLeftPushback = engineLeft;
+            hasAnyPushbackData = true;
+        }
+
+        if (TryGet(keys, "startenginesrightpushback", out var engineRightS) && TryParseInvariant(engineRightS, out var engineRight))
+        {
+            config.StartEnginesRightPushback = engineRight;
+            hasAnyPushbackData = true;
+        }
+
+        if (TryGet(keys, "startenginesquickpushback", out var engineQuickS) && TryParseInvariant(engineQuickS, out var engineQuick))
+        {
+            config.StartEnginesQuickPushback = engineQuick;
+            hasAnyPushbackData = true;
+        }
+
+        return hasAnyPushbackData ? config : null;
+    }
+
+    // Helper method to parse baggage positions
+    private BaggagePositions? ParseBaggagePositions(KeyCollection keys)
+    {
+        var positions = new BaggagePositions();
+        bool hasAnyPosition = false;
+
+        if (TryGet(keys, "baggage_loader_front_pos", out var frontLoaderS))
+        {
+            positions.BaggageLoaderFrontPos = ParsePosition(frontLoaderS);
+            hasAnyPosition = true;
+        }
+
+        if (TryGet(keys, "baggage_loader_rear_pos", out var rearLoaderS))
+        {
+            positions.BaggageLoaderRearPos = ParsePosition(rearLoaderS);
+            hasAnyPosition = true;
+        }
+
+        if (TryGet(keys, "baggage_loader_main_pos", out var mainLoaderS))
+        {
+            positions.BaggageLoaderMainPos = ParsePosition(mainLoaderS);
+            hasAnyPosition = true;
+        }
+
+        if (TryGet(keys, "baggage_train_front_pos", out var frontTrainS))
+        {
+            positions.BaggageTrainFrontPos = ParsePosition(frontTrainS);
+            hasAnyPosition = true;
+        }
+
+        if (TryGet(keys, "baggage_train_rear_pos", out var rearTrainS))
+        {
+            positions.BaggageTrainRearPos = ParsePosition(rearTrainS);
+            hasAnyPosition = true;
+        }
+
+        if (TryGet(keys, "baggage_train_main_pos", out var mainTrainS))
+        {
+            positions.BaggageTrainMainPos = ParsePosition(mainTrainS);
+            hasAnyPosition = true;
+        }
+
+        return hasAnyPosition ? positions : null;
+    }
+
+    // Helper method to parse stairs positions
+    private StairsPositions? ParseStairsPositions(KeyCollection keys)
+    {
+        var positions = new StairsPositions();
+        bool hasAnyPosition = false;
+
+        if (TryGet(keys, "stairs_front_pos", out var frontS))
+        {
+            positions.StairsFrontPos = ParsePosition(frontS);
+            hasAnyPosition = true;
+        }
+
+        if (TryGet(keys, "stairs_middle_pos", out var middleS))
+        {
+            positions.StairsMiddlePos = ParsePosition(middleS);
+            hasAnyPosition = true;
+        }
+
+        if (TryGet(keys, "stairs_rear_pos", out var rearS))
+        {
+            positions.StairsRearPos = ParsePosition(rearS);
+            hasAnyPosition = true;
+        }
+
+        return hasAnyPosition ? positions : null;
+    }
+
     private static bool IsParsedKey(string key)
     {
         string[] parsedPrefixes = {
             "lat", "lon", "heading", "spawn_lat", "spawn_lon", "spawn_heading",
             "service_", "serviceType", "offset", "offset_meters", "tags", "category",
-            "pushback", "marshaller", "catering", "fuel", "allowed_aircraft", "members"
+            "pushback", "marshaller", "catering", "fuel", "allowed_aircraft", "members",
+            "this_parking_pos", "type", "maxwingspan", "radiusleft", "radiusright",
+            "gatedistancethreshold", "hasjetway", "parkingsystem", "undergroundrefueling",
+            "nopassengerstairs", "nopassengerbus", "ignoreicaoprefixes", "ignorepreferredexit",
+            "dontcreatejetways", "disablepaxbarriers", "usercustomized", "loadertype",
+            "airlinecodes", "handlingtexture", "cateringtexture", "walkertype",
+            "walkerpaththickness", "walkerloopstart", "passengerpaththickness",
+            "pushbacktype", "pushbacklabels", "snapleftpushbackpos", "snaprightpushbackpos",
+            "pushbackleftpos", "pushbackrightpos", "pushbackpos", "wingwalkers", "startengines",
+            "parkingsystem_stopposition", "parkingsystem_objectposition",
+            "baggage_loader_", "baggage_train_", "stairs_"
         };
 
         return parsedPrefixes.Any(p => key.StartsWith(p, StringComparison.OrdinalIgnoreCase));

@@ -1,13 +1,7 @@
-﻿#pragma warning disable CS8019 // Unused using directive
-using System;
+﻿using GsxConverter.Models.Json;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Text.Json;
-using System.Threading.Tasks;
-using GsxConverter.Models;
 using GsxConverter.Parsers;
-using System.Linq;
-#pragma warning restore CS8019
 
 namespace UI.Maui.Pages
 {
@@ -21,6 +15,7 @@ namespace UI.Maui.Pages
         {
             InitializeComponent();
             GatesCollection.ItemsSource = _gates;
+            DeIceCollection.ItemsSource = new ObservableCollection<DeIceDefinition>();
         }
 
         async void OnOpenIniClicked(object? sender, EventArgs e)
@@ -120,6 +115,14 @@ namespace UI.Maui.Pages
                 else
                 {
                     ConfigEditor.Text = "(no jetway_rootfloor_heights section found)";
+                }
+
+                // Populate DeIce list
+                var deiceList = DeIceCollection.ItemsSource as ObservableCollection<DeIceDefinition>;
+                if (deiceList != null)
+                {
+                    deiceList.Clear();
+                    foreach (var d in cfg.DeIces) deiceList.Add(d);
                 }
 
                 // Show de-ice count in status message for immediate feedback

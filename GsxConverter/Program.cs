@@ -1,5 +1,5 @@
 ﻿using System.Text.Json;
-using GsxConverter.Models;
+using GsxConverter.Models.Json;
 using GsxConverter.Parsers;
 
 namespace GsxConverter;
