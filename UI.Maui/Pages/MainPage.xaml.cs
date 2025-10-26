@@ -8,7 +8,7 @@ namespace UI.Maui.Pages
     public partial class MainPage
     {
         ObservableCollection<GateDefinition> _gates = new();
-
+        GroundServiceConfig? _currentConfig;
         string? _inputTempPath;
 
         public MainPage()
@@ -57,17 +57,66 @@ namespace UI.Maui.Pages
                 var extension = Path.GetExtension(fileName).ToLowerInvariant();
                 FileTypeLabel.Text = extension switch
                 {
-                    ".ini" => "GSX INI Format",
-                    ".py" => "GSX Python Format", 
-                    _ => "Unknown Format"
+                    ".ini" => "📝 GSX INI Format",
+                    ".py" => "🐍 GSX Python Format", 
+                    _ => "❓ Unknown Format"
                 };
 
-                StatusLabel.Text = $"Loaded {fileName}";
+                // Show file size
+                var fileInfo = new FileInfo(_inputTempPath);
+                FileSizeLabel.Text = $"{fileInfo.Length / 1024.0:F1} KB";
+
+                StatusLabel.Text = $"✅ Loaded {fileName}";
                 ParseAndDisplay(_inputTempPath);
             }
             catch (Exception ex)
             {
-                StatusLabel.Text = "Error opening file: " + ex.Message;
+                StatusLabel.Text = "❌ Error opening file: " + ex.Message;
+            }
+        }
+
+        async void OnSaveJsonClicked(object? sender, EventArgs e)
+        {
+            if (_currentConfig == null)
+            {
+                StatusLabel.Text = "⚠️ No data to save. Please open a GSX file first.";
+                return;
+            }
+
+            try
+            {
+                var result = await FilePicker.PickAsync(new PickOptions
+                {
+                    PickerTitle = "Save JSON File",
+                    FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+                    {
+                        { DevicePlatform.WinUI, new[] { ".json" } }
+                    })
+                });
+
+                if (result == null)
+                {
+                    StatusLabel.Text = "Save cancelled.";
+                    return;
+                }
+
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+
+                var json = JsonSerializer.Serialize(_currentConfig, options);
+                var outputPath = result.FullPath;
+                
+                await File.WriteAllTextAsync(outputPath, json);
+                
+                var fileSize = new FileInfo(outputPath).Length / 1024.0;
+                StatusLabel.Text = $"💾 Saved to {Path.GetFileName(outputPath)} ({fileSize:F1} KB) - {_currentConfig.Gates.Count} gates";
+            }
+            catch (Exception ex)
+            {
+                StatusLabel.Text = "❌ Save error: " + ex.Message;
             }
         }
 
@@ -102,7 +151,7 @@ namespace UI.Maui.Pages
                 if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
 
                 await File.WriteAllTextAsync(output, json);
-                JsonPreviewEditor.Text = json;
+                JsonPreviewLabel.Text = json;
                 StatusLabel.Text = $"Saved to {output} (Airport: {cfg.AirportIcao}, Gates: {cfg.Gates.Count})";
             }
             catch (Exception ex)
@@ -138,6 +187,7 @@ namespace UI.Maui.Pages
             try
             {
                 var cfg = ParseGsxFile(path);
+                _currentConfig = cfg;
 
                 _gates.Clear();
                 foreach (var g in cfg.Gates.Take(500))
@@ -148,7 +198,7 @@ namespace UI.Maui.Pages
                     WriteIndented = true,
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase 
                 };
-                JsonPreviewEditor.Text = JsonSerializer.Serialize(cfg, opt);
+                JsonPreviewLabel.Text = JsonSerializer.Serialize(cfg, opt);
 
                 // Build a top-of-UI friendly representation of the jetway_rootfloor_heights section
                 if (cfg.JetwayRootfloorHeights.Count > 0)
@@ -181,14 +231,14 @@ namespace UI.Maui.Pages
                 };
 
                 var hasWaypoints = cfg.Gates.Any(g => g.WalkerWaypoints != null || g.PassengerWaypoints != null);
-                var waypointInfo = hasWaypoints ? " (with waypoints)" : "";
+                var waypointInfo = hasWaypoints ? " 🚶 with waypoints" : "";
                 
-                StatusLabel.Text = $"Parsed {formatName}: {cfg.Gates.Count} gates, {cfg.DeIces.Count} deice areas{waypointInfo}";
+                StatusLabel.Text = $"✅ Parsed {formatName}: {cfg.Gates.Count} gates, {cfg.DeIces.Count} deice areas{waypointInfo}";
             }
             catch (Exception ex)
             {
-                StatusLabel.Text = "Parse error: " + ex.Message;
-                JsonPreviewEditor.Text = ex.ToString();
+                StatusLabel.Text = "❌ Parse error: " + ex.Message;
+                JsonPreviewLabel.Text = ex.ToString();
                 ConfigEditor.Text = string.Empty;
             }
         }
@@ -205,19 +255,19 @@ namespace UI.Maui.Pages
                 };
                 
                 var gateJson = JsonSerializer.Serialize(selectedGate, options);
-                JsonPreviewEditor.Text = $"Selected Gate: {selectedGate.GateId}\n\n{gateJson}";
+                JsonPreviewLabel.Text = $"🛫 Selected Gate: {selectedGate.GateId}\n\n{gateJson}";
                 
                 // Update status with enhanced features
                 var features = new List<string>();
-                if (selectedGate.HasJetway == true) features.Add("Jetway");
-                if (selectedGate.WalkerWaypoints?.Waypoints.Count > 0) features.Add($"Walker waypoints ({selectedGate.WalkerWaypoints.Waypoints.Count})");
-                if (selectedGate.PassengerWaypoints?.Waypoints.Count > 0) features.Add($"Passenger waypoints ({selectedGate.PassengerWaypoints.Waypoints.Count})");
-                if (selectedGate.PassengerEnterGatePos != null) features.Add("3D passenger entry");
-                if (selectedGate.BaggagePositions != null) features.Add("Baggage positions");
-                if (selectedGate.PushbackConfig != null) features.Add("Pushback config");
+                if (selectedGate.HasJetway == true) features.Add("✈️ Jetway");
+                if (selectedGate.WalkerWaypoints?.Waypoints.Count > 0) features.Add($"🚶 Walker waypoints ({selectedGate.WalkerWaypoints.Waypoints.Count})");
+                if (selectedGate.PassengerWaypoints?.Waypoints.Count > 0) features.Add($"👥 Passenger waypoints ({selectedGate.PassengerWaypoints.Waypoints.Count})");
+                if (selectedGate.PassengerEnterGatePos != null) features.Add("🚪 3D entry");
+                if (selectedGate.BaggagePositions != null) features.Add("🧳 Baggage");
+                if (selectedGate.PushbackConfig != null) features.Add("↩️ Pushback");
                 
-                var featureText = features.Count > 0 ? $" - Features: {string.Join(", ", features)}" : "";
-                StatusLabel.Text = $"Gate {selectedGate.GateId}: {selectedGate.Services.Count} services{featureText}";
+                var featureText = features.Count > 0 ? $" | {string.Join(", ", features)}" : "";
+                StatusLabel.Text = $"Gate {selectedGate.GateId}: 🔧 {selectedGate.Services.Count} services{featureText}";
             }
         }
     }

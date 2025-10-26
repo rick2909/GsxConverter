@@ -6,68 +6,113 @@
              Title="GSX Converter">
   <ContentPage.Content>
     <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" ColumnDefinitions="*" Padding="10" RowSpacing="8">
-      <HorizontalStackLayout Grid.Row="0" Spacing="8">
-        <Button Text="Open GSX File..." Clicked="OnOpenGsxFileClicked" />
-        <Button Text="Convert" Clicked="OnConvertClicked" />
-        <Label x:Name="FileTypeLabel" Text="" VerticalOptions="Center" FontAttributes="Italic" />
-      </HorizontalStackLayout>
-
-      <!-- Top: show the jetway_rootfloor_heights config (if present) -->
-      <StackLayout Grid.Row="1" Orientation="Vertical" Padding="0,4,0,4">
-        <Label Text="Config: [jetway_rootfloor_heights]" FontAttributes="Bold" />
-        <Editor x:Name="ConfigEditor" AutoSize="TextChanges" HeightRequest="80" IsReadOnly="True" />
-        <Label Text="De-Ice entries" FontAttributes="Bold" Margin="0,6,0,0" />
-        <CollectionView x:Name="DeIceCollection" HeightRequest="80">
-          <CollectionView.ItemTemplate>
-            <DataTemplate x:DataType="json:DeIceDefinition">
-              <StackLayout Orientation="Horizontal" Padding="4">
-                <Label Text="{Binding Id}" />
-                <Label Text=", " />
-                <Label Text="{Binding Type}" />
-              </StackLayout>
-            </DataTemplate>
-          </CollectionView.ItemTemplate>
-        </CollectionView>
-        <Label TextColor="Red" IsVisible="False" />
-      </StackLayout>
-
-      <Grid Grid.Row="2" ColumnDefinitions="Auto,*" ColumnSpacing="8" VerticalOptions="Center">
-        <Label Grid.Column="0" Text="Output:" VerticalOptions="Center" />
-        <Entry Grid.Column="1" x:Name="OutputPathEntry" />
+      <!-- Top Toolbar -->
+      <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,Auto,*,Auto" ColumnSpacing="8">
+        <Button Grid.Column="0" Text="📁 Open GSX File" Clicked="OnOpenGsxFileClicked" />
+        <Button Grid.Column="1" Text="💾 Save JSON" Clicked="OnSaveJsonClicked" />
+        <Button Grid.Column="2" Text="🔄 Convert" Clicked="OnConvertClicked" />
+        <Label Grid.Column="3" x:Name="FileTypeLabel" Text="" VerticalOptions="Center" FontAttributes="Italic" Margin="10,0,0,0" />
+        <Label Grid.Column="4" x:Name="FileSizeLabel" Text="" VerticalOptions="Center" FontSize="Small" TextColor="Gray" />
       </Grid>
 
-      <Grid Grid.Row="3" ColumnDefinitions="300,8,*">
-        <StackLayout Grid.Column="0">
-          <Label Text="Parsed Gates" FontAttributes="Bold" />
-          <CollectionView x:Name="GatesCollection" SelectionMode="Single" SelectionChanged="OnGateSelectionChanged" HeightRequest="500">
-            <CollectionView.ItemTemplate>
-              <DataTemplate x:DataType="json:GateDefinition">
-                <Border Padding="8" Margin="4" BackgroundColor="LightGray">
-                  <StackLayout>
-                    <Label Text="{Binding GateId}" FontAttributes="Bold"/>
-                    <Label Text="{Binding Position.Latitude, StringFormat='Lat: {0:F6}'}" FontSize="Small" />
-                    <Label Text="{Binding Position.Longitude, StringFormat='Lon: {0:F6}'}" FontSize="Small" />
-                    <Label Text="{Binding Services.Count, StringFormat='Services: {0}'}" FontSize="Small" />
-                    <StackLayout Orientation="Horizontal" Spacing="4">
-                      <Label Text="Jetway" FontSize="Micro" BackgroundColor="Green" TextColor="White" Padding="2" IsVisible="{Binding HasJetway}" />
-                      <Label Text="Waypoints" FontSize="Micro" BackgroundColor="Blue" TextColor="White" Padding="2" x:Name="WaypointsLabel" />
-                    </StackLayout>
+      <!-- Output Path -->
+      <Border Grid.Row="1" Stroke="#555555" StrokeThickness="1" Padding="8" BackgroundColor="#2D2D30">
+        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" VerticalOptions="Center">
+          <Label Grid.Column="0" Text="💾 Output Path:" VerticalOptions="Center" FontAttributes="Bold" TextColor="#E0E0E0" />
+          <Entry Grid.Column="1" x:Name="OutputPathEntry" BackgroundColor="#1E1E1E" TextColor="#D4D4D4" />
+        </Grid>
+      </Border>
+
+      <!-- Configuration Section - Side by Side -->
+      <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="10">
+        <!-- Jetway Floor Heights -->
+        <Border Grid.Column="0" Stroke="#555555" StrokeThickness="1" Padding="10" BackgroundColor="#2D2D30">
+          <StackLayout Orientation="Vertical" Spacing="8">
+            <Label Text="📋 Configuration: [jetway_rootfloor_heights]" FontAttributes="Bold" FontSize="14" TextColor="#E0E0E0" />
+            <Editor x:Name="ConfigEditor" AutoSize="TextChanges" HeightRequest="80" IsReadOnly="True" BackgroundColor="#1E1E1E" TextColor="#D4D4D4" />
+          </StackLayout>
+        </Border>
+
+        <!-- De-Ice Positions -->
+        <Border Grid.Column="1" Stroke="#555555" StrokeThickness="1" Padding="10" BackgroundColor="#2D2D30">
+          <StackLayout Orientation="Vertical" Spacing="8">
+            <Label Text="❄️ De-Ice Positions" FontAttributes="Bold" FontSize="14" TextColor="#E0E0E0" />
+            <CollectionView x:Name="DeIceCollection" HeightRequest="80">
+              <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="json:DeIceDefinition">
+                  <StackLayout Orientation="Horizontal" Padding="4">
+                    <Label Text="{Binding Id}" FontAttributes="Bold" TextColor="#4EC9B0" />
+                    <Label Text=" - " TextColor="#808080" />
+                    <Label Text="{Binding Type}" TextColor="#D4D4D4" />
                   </StackLayout>
-                </Border>
-              </DataTemplate>
-            </CollectionView.ItemTemplate>
-          </CollectionView>
-        </StackLayout>
-
-        <BoxView Grid.Column="1" />
-
-        <StackLayout Grid.Column="2">
-          <Label Text="JSON Preview" FontAttributes="Bold" />
-          <Editor x:Name="JsonPreviewEditor" AutoSize="TextChanges" HeightRequest="500" IsReadOnly="True"/>
-        </StackLayout>
+                </DataTemplate>
+              </CollectionView.ItemTemplate>
+            </CollectionView>
+          </StackLayout>
+        </Border>
       </Grid>
 
-      <Label Grid.Row="4" x:Name="StatusLabel" Text="Ready" />
+      <!-- Main Content Area -->
+      <Grid Grid.Row="3" ColumnDefinitions="320,*" ColumnSpacing="10">
+        <!-- Gates List -->
+        <Border Grid.Column="0" Stroke="#555555" StrokeThickness="1" Padding="8" BackgroundColor="#252526">
+          <Grid RowDefinitions="Auto,*">
+            <Label Grid.Row="0" Text="🛫 Parsed Gates" FontAttributes="Bold" FontSize="16" Margin="0,0,0,8" TextColor="#E0E0E0" />
+            <ScrollView Grid.Row="1" HorizontalOptions="Fill" VerticalOptions="Fill">
+              <CollectionView x:Name="GatesCollection" SelectionMode="Single" SelectionChanged="OnGateSelectionChanged">
+                <CollectionView.ItemTemplate>
+                  <DataTemplate x:DataType="json:GateDefinition">
+                    <Border Padding="10" Margin="0,2" BackgroundColor="#1E1E1E" Stroke="#3E3E42" StrokeThickness="1">
+                      <StackLayout Spacing="4">
+                        <Label Text="{Binding GateId}" FontAttributes="Bold" FontSize="15" TextColor="#4EC9B0" />
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="4">
+                          <Label Grid.Column="0" Text="📍" FontSize="12" />
+                          <Label Grid.Column="1" Text="{Binding Position.Latitude, StringFormat='Lat: {0:F6}'}" FontSize="12" TextColor="#9CDCFE" />
+                        </Grid>
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="4">
+                          <Label Grid.Column="0" Text="📍" FontSize="12" />
+                          <Label Grid.Column="1" Text="{Binding Position.Longitude, StringFormat='Lon: {0:F6}'}" FontSize="12" TextColor="#9CDCFE" />
+                        </Grid>
+                        <Label Text="{Binding Services.Count, StringFormat='🔧 {0} Services'}" FontSize="12" TextColor="#4FC1FF" />
+                        <StackLayout Orientation="Horizontal" Spacing="4" Margin="0,4,0,0">
+                          <Border Padding="4,2" BackgroundColor="#0E7A0D" StrokeThickness="0" IsVisible="{Binding HasJetway}">
+                            <Label Text="✈️ Jetway" FontSize="10" TextColor="White" />
+                          </Border>
+                          <Border Padding="4,2" BackgroundColor="#0E639C" StrokeThickness="0" x:Name="WaypointsLabel">
+                            <Label Text="🚶 Waypoints" FontSize="10" TextColor="White" />
+                          </Border>
+                        </StackLayout>
+                      </StackLayout>
+                    </Border>
+                  </DataTemplate>
+                </CollectionView.ItemTemplate>
+              </CollectionView>
+            </ScrollView>
+          </Grid>
+        </Border>
+
+        <!-- JSON Preview -->
+        <Border Grid.Column="1" Stroke="#555555" StrokeThickness="1" Padding="8" BackgroundColor="#252526">
+          <Grid RowDefinitions="Auto,*">
+            <Label Grid.Row="0" Text="📄 JSON Preview" FontAttributes="Bold" FontSize="16" Margin="0,0,0,8" TextColor="#E0E0E0" />
+            <Border Grid.Row="1" BackgroundColor="#1E1E1E" Stroke="Transparent">
+              <ScrollView HorizontalScrollBarVisibility="Always" VerticalScrollBarVisibility="Always">
+                <Label x:Name="JsonPreviewLabel"
+                       TextColor="#D4D4D4"
+                       FontFamily="Consolas,Courier New,monospace"
+                       FontSize="12"
+                       Padding="8"
+                       LineBreakMode="NoWrap" />
+              </ScrollView>
+            </Border>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <!-- Status Bar -->
+      <Border Grid.Row="4" Stroke="#555555" StrokeThickness="1" Padding="8" BackgroundColor="#2D2D30">
+        <Label x:Name="StatusLabel" Text="Ready" FontAttributes="Bold" TextColor="#E0E0E0" />
+      </Border>
     </Grid>
   </ContentPage.Content>
 </ContentPage>
