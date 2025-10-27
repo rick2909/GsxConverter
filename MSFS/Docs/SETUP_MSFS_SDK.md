@@ -11,7 +11,7 @@ This guide explains how to install the MSFS SDK, package the GSX Native Panel, a
 
 Verify the SDK tools
 - FSPackagetool should be installed in the SDK folder (varies by install)
-  - Typical: C:\MSFS SDK\Tools\FSPackagetool\fspackagetool.exe
+  - Typical: C:\MSFS 2024 SDK\bin\FSPackagetool\fspackagetool.exe
 
 ## 2) Project Layout (this repo)
 
@@ -29,7 +29,7 @@ Use FSPackagetool to create a proper package with layout.json
 - Run the packager and point to manifest.json
 
 Example (PowerShell):
-- & "C:\\MSFS SDK\\Tools\\FSPackagetool\\fspackagetool.exe" .\\manifest.json
+- & "C:\\MSFS 2024 SDK\\bin\\Tools\\FSPackagetool\\fspackagetool.exe" .\\manifest.json
 
 Results
 - A packaged build folder will be created with a layout.json

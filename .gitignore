@@ -9,3 +9,5 @@ obj/
 *.Rider/
 *sample-files/
 **/assets/airports/*.json
+*_PackageInt/
+*Packages/
