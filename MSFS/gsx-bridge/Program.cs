@@ -7,6 +7,24 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Gsx.Bridge;
 
+public interface ISimDataProvider
+{
+    Task<string?> GetCurrentIcaoAsync(CancellationToken ct = default);
+    Task<IEnumerable<object>> GetParkingAsync(CancellationToken ct = default);
+    Task<bool> ExecuteActionAsync(string action, object? payload, CancellationToken ct = default);
+}
+
+public class StubSimDataProvider : ISimDataProvider
+{
+    public Task<string?> GetCurrentIcaoAsync(CancellationToken ct = default) => Task.FromResult<string?>("EHAM");
+    public Task<IEnumerable<object>> GetParkingAsync(CancellationToken ct = default) => Task.FromResult<IEnumerable<object>>(new []
+    {
+        new { name = "B15", type = 9, hasJetway = true },
+        new { name = "B16", type = 8, hasJetway = false }
+    }.Cast<object>());
+    public Task<bool> ExecuteActionAsync(string action, object? payload, CancellationToken ct = default) => Task.FromResult(true);
+}
+
 public class Program
 {
     public record ActionRequest(string action, object? payload);
@@ -14,6 +32,7 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        builder.Services.AddSingleton<ISimDataProvider, StubSimDataProvider>();
         builder.Services.AddCors(o => o.AddPolicy("dev", p => p
             .AllowAnyOrigin()
             .AllowAnyHeader()
@@ -25,30 +44,34 @@ public class Program
 
         app.MapGet("/api/health", () => Results.Ok(new { ok = true }));
 
-        app.MapPost("/api/action", async (HttpContext ctx, ILoggerFactory lf) =>
+        app.MapGet("/api/icao", async (ISimDataProvider sim, CancellationToken ct) =>
+        {
+            var icao = await sim.GetCurrentIcaoAsync(ct);
+            return Results.Ok(new { icao });
+        });
+
+        app.MapGet("/api/parking", async (ISimDataProvider sim, CancellationToken ct) =>
+        {
+            var stands = await sim.GetParkingAsync(ct);
+            return Results.Ok(stands);
+        });
+
+        app.MapPost("/api/action", async (HttpContext ctx, ILoggerFactory lf, ISimDataProvider sim, CancellationToken ct) =>
         {
             var logger = lf.CreateLogger("Action");
             var req = await JsonSerializer.DeserializeAsync<ActionRequest>(ctx.Request.Body, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
-            });
+            }, ct);
             if (req is null || string.IsNullOrWhiteSpace(req.action))
             {
                 return Results.BadRequest(new { error = "action required" });
             }
 
-            // TODO: Hook to SimConnect/WASM: pushback, fuel, catering, etc.
-            logger.LogInformation("Action received: {Action} Payload: {Payload}", req.action, JsonSerializer.Serialize(req.payload));
-            return Results.Ok(new { accepted = true });
+            var ok = await sim.ExecuteActionAsync(req.action, req.payload, ct);
+            logger.LogInformation("Action received: {Action} Payload: {Payload} Result: {Result}", req.action, JsonSerializer.Serialize(req.payload), ok);
+            return Results.Ok(new { accepted = ok });
         });
-
-        // TODO: Replace with SimConnect queries
-        app.MapGet("/api/icao", () => Results.Ok(new { icao = "EHAM" }));
-        app.MapGet("/api/parking", () => Results.Ok(new[]
-        {
-            new { name = "B15", type = 9, hasJetway = true },
-            new { name = "B16", type = 8, hasJetway = false }
-        }));
 
         app.Run("http://localhost:8787");
     }

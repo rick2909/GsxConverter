@@ -3,6 +3,7 @@ Local Dev Guide
 Prereqs
 - MSFS 2024 + SDK installed (for FSPackagetool)
 - .NET 9 SDK
+ - See Docs/SETUP_MSFS_SDK.md for SDK installation and packaging steps
 
 Run the bridge
 - dotnet run --project .\MSFS\gsx-bridge\Gsx.Bridge.csproj
@@ -13,6 +14,7 @@ Panel quick test (unpackaged)
 
 Proper packaging
 - Use FSPackagetool to create layout.json and build a proper package inside gsx-native-panel
+ - Then copy the resulting package to your Community folder to see it in the toolbar
 
 Wiring your EHAM canonical JSON
 - Copy your file from `GsxConverter\sample-files\eham-flytampa.canonical.json` to `MSFS\gsx-native-panel\assets\airports\eham.canonical.json`
@@ -22,3 +24,4 @@ Next steps
 - Implement bridge endpoints for: current ICAO, current parking, list parking spots
 - Add SimConnect logic to trigger ground actions (pushback, fuel, catering)
 - Optional: Transition heavy control logic to a WASM module for deeper/native integration
+ - Read SimConnect.README.md for the binding plan
