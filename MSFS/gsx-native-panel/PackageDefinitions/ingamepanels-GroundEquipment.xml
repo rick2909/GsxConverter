@@ -13,20 +13,36 @@
 	<PackageOrderHint>UI_PATCH</PackageOrderHint>
 	<AssetGroups>
 		<AssetGroup Name="Assets">
-			<Type Version="0">Copy</Type>
+			<Type>Copy</Type>
 			<Flags>
 				<FSXCompatibility>false</FSXCompatibility>
 			</Flags>
 			<AssetDir>assets\</AssetDir>
 			<OutputDir>assets\</OutputDir>
 		</AssetGroup>
-		<AssetGroup Name="InGamePanels">
-			<Type Version="0">Copy</Type>
+		<AssetGroup Name="ToolbarIcon">
+			<Type>Copy</Type>
+			<Flags>
+				<FSXCompatibility>false</FSXCompatibility>
+			</Flags>
+			<AssetDir>html_ui\Textures\</AssetDir>
+			<OutputDir>html_ui\Textures\</OutputDir>
+		</AssetGroup>
+		<AssetGroup Name="InGamePanelHTML">
+			<Type>Copy</Type>
 			<Flags>
 				<FSXCompatibility>false</FSXCompatibility>
 			</Flags>
 			<AssetDir>html_ui\InGamePanels\gsx-native-panel\</AssetDir>
 			<OutputDir>html_ui\InGamePanels\gsx-native-panel\</OutputDir>
+		</AssetGroup>
+		<AssetGroup Name="InGamePanels">
+			<Type>SPB</Type>
+			<Flags>
+				<FSXCompatibility>false</FSXCompatibility>
+			</Flags>
+			<AssetDir>PackageSources\InGamePanels\</AssetDir>
+			<OutputDir>InGamePanels\</OutputDir>
 		</AssetGroup>
 	</AssetGroups>
 </AssetPackage>

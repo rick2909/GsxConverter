@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<SimBase.Document Type="InGamePanels" version="1,0">
+  <Filename>InGamePanel_GroundEquipment.spb</Filename>
+  <InGamePanels.InGamePanelDefinition 
+    id="PANEL_GROUND_EQUIPMENT" 
+    Name="GroundEquipment" 
+    url="html_ui/InGamePanels/gsx-native-panel/index.html" 
+    resizeDirections="Both" 
+    minWidth="500" 
+    minHeight="700" 
+    defaultWidth="600" 
+    defaultHeight="800" 
+    defaultLeft="200" 
+    defaultTop="200" 
+    icon="ICON_TOOLBAR_GROUND_EQUIPMENT">
+  </InGamePanels.InGamePanelDefinition>
+</SimBase.Document>

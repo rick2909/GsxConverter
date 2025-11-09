@@ -2,6 +2,38 @@
 
 This guide explains how to install the MSFS SDK, package the GSX Native Panel, and import it into the simulator.
 
+## Known Issues with MSFS 2024 - RESOLVED! ✅
+
+**Solution Found:** InGamePanels require SPB (Single Package Binary) compilation using a specific XML structure.
+
+### Working Solution (October 28, 2025):
+
+The panel now works correctly using the proper MSFS InGamePanel template structure:
+
+1. ✅ **PackageSources XML** with `<SimBase.Document Type="InGamePanels">` structure
+2. ✅ **SPB compilation** creates the required `.spb` binary file  
+3. ✅ **Custom element registration** using `window.customElements.define()` and `checkAutoload()`
+4. ✅ **TemplateElement** class extension instead of standalone HTML
+5. ✅ **Toolbar icon SVG** in `html_ui/Textures/Menu/toolbar/`
+6. ✅ **ingame-ui element** with `panel-id` attribute instead of standalone panel.xml
+
+### Key Files Structure:
+```
+PackageSources/InGamePanels/
+  ingamepanel-groundequipment.xml     # SPB source definition
+html_ui/
+  InGamePanels/gsx-native-panel/
+    index.html                         # Uses <ingame-ui> element
+    js/main.js                         # Extends TemplateElement
+  Textures/Menu/toolbar/
+    ICON_TOOLBAR_GROUND_EQUIPMENT.svg  # Toolbar icon
+InGamePanels/
+  ingamepanel-groundequipment.spb      # Compiled binary (auto-generated)
+```
+
+### Reference Template:
+Based on [msfs2020-toolbar-window-template](https://github.com/bymaximus/msfs2020-toolbar-window-template)
+
 ## 1) Install the MSFS SDK
 
 - Launch Microsoft Flight Simulator
