@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<InGamePanel id="PANEL_GROUND_EQUIPMENT" title="Ground Equipment" tooltip="Ground Equipment" width="420" height="600" icon="/Pages/VCockpit/Instruments/Shared/Assets/Images/Generic/ATC.svg">
-  <Resource id="GROUND_EQUIPMENT_HTML" src="index.html" />
-</InGamePanel>
