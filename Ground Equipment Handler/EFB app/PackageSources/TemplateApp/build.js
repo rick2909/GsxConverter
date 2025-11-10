@@ -16,7 +16,7 @@ const env = {
 };
 
 const baseConfig = {
-  entryPoints: ["src/TemplateApp.tsx"],
+  entryPoints: ["src/GroundEquipmentApp.tsx"],
   keepNames: true,
   bundle: true,
   outdir: "dist",
@@ -28,7 +28,7 @@ const baseConfig = {
     ".json": "copy",
   },
   target: "es2017",
-  define: { BASE_URL: `"coui://html_ui/efb_ui/efb_apps/TemplateApp"` },
+  define: { BASE_URL: `"coui://html_ui/efb_ui/efb_apps/GroundEquipmentApp"` },
   plugins: [
     copyStaticFiles({
       src: "./src/Assets",

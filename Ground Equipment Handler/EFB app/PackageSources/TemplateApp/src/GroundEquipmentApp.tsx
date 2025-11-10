@@ -14,7 +14,7 @@ import { GateList } from "./Components/GateList";
 import { GateDetail } from "./Components/GateDetail";
 import { AirportData } from "./types/GateData";
 
-import "./TemplateApp.scss";
+import "./GroundEquipmentApp.scss";
 
 /**
  * BASE_URL is a global var defined in build.js
@@ -23,11 +23,11 @@ import "./TemplateApp.scss";
  */
 declare const BASE_URL: string;
 
-interface TemplateAppViewProps extends RequiredProps<AppViewProps, "bus"> {
+interface GroundEquipmentAppViewProps extends RequiredProps<AppViewProps, "bus"> {
   airportData: AirportData;
 }
 
-class TemplateAppView extends AppView<TemplateAppViewProps> {
+class GroundEquipmentAppView extends AppView<GroundEquipmentAppViewProps> {
   /**
    * Optional property
    * Default view key to show if using AppViewService
@@ -87,16 +87,16 @@ class TemplateAppView extends AppView<TemplateAppViewProps> {
   /**
    * Optional method
    * Default behavior is rendering AppContainer which works with AppViewService
-   * We usually surround it with <div class="template-app">{super.render}</div>
+   * We usually surround it with <div class="ground-equipment-app">{super.render}</div>
    * Can render anything (JSX, Component) so it doesn't require to use AppViewService and/or AppContainer
    * @returns VNode
    */
   public render(): VNode {
-    return <div class="template-app">{super.render()}</div>;
+    return <div class="ground-equipment-app">{super.render()}</div>;
   }
 }
 
-class TemplateApp extends App {
+class GroundEquipmentApp extends App {
   private airportData: AirportData = {
     airport: "Loading...",
     version: "0.1",
@@ -149,7 +149,7 @@ class TemplateApp extends App {
    * @returns Promise<void>
    */
   public async install(_props: AppInstallProps): Promise<void> {
-    Efb.loadCss(`${BASE_URL}/TemplateApp.css`);
+    Efb.loadCss(`${BASE_URL}/GroundEquipmentApp.css`);
     
     // Load the airport gate data
     try {
@@ -183,12 +183,12 @@ class TemplateApp extends App {
   /*
    * @returns {AppView} created above
    */
-  public render(): TVNode<TemplateAppView> {
-    return <TemplateAppView bus={this.bus} airportData={this.airportData} />;
+  public render(): TVNode<GroundEquipmentAppView> {
+    return <GroundEquipmentAppView bus={this.bus} airportData={this.airportData} />;
   }
 }
 
 /**
  * App definition to be injected into EFB
  */
-Efb.use(TemplateApp);
+Efb.use(GroundEquipmentApp);

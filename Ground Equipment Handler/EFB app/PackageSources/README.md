@@ -1,7 +1,7 @@
-# EFB Template App
+# Ground Equipment Handler EFB App
 
 ### Optional
-  Open the `TemplateApp.code-workspace` file inside of the TemplateApp\ folder with Visual Studio Code.
+  Open the `GroundEquipmentApp.code-workspace` file inside of the GroundEquipmentApp\ folder with Visual Studio Code.
 
 
 ______________
@@ -9,7 +9,7 @@ ______________
 
 You should have node JS `(> v18.0)` and NPM `(> v5.0)`
 
-**Run this command in `efb_api\` and `TemplateApp\` folders:**
+**Run this command in `efb_api\` and `GroundEquipmentApp\` folders:**
 ```bash
 $ npm install
 ```
@@ -17,21 +17,21 @@ $ npm install
 ______________
 ### Build
 
-Run this command in TemplateApp\ folder to build the app once:
+Run this command in GroundEquipmentApp\ folder to build the app once:
 ```bash
 $ npm run build
 ```
 ______________
 ### Watch
 
-Run this command in TemplateApp\ folder to build the app each time you make a modification:
+Run this command in GroundEquipmentApp\ folder to build the app each time you make a modification:
 ```bash
 $ npm run watch
 ```
 ______________
 ### Environment variables
 
-You can edit your environment variables in `TemplateApp\.env`
+You can edit your environment variables in `GroundEquipmentApp\.env`
 
 | Name | Description | Should be used in | Defaults to |
 | ----------- | ----------- | ----------- | ----------- |

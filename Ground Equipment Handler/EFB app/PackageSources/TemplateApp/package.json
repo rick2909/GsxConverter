@@ -1,8 +1,8 @@
 {
-  "name": "@efb/templateappname",
-  "version": "0.0.2",
+  "name": "@efb/groundequipmentapp",
+  "version": "1.0.0",
   "license": "MIT",
-  "author": "Asobo Studio",
+  "author": "Rick van Nieuwland",
   "scripts": {
     "build": "node ./build.js",
     "clean": "npm run clean:dist && npm run clean:node_modules",
