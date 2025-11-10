@@ -1,0 +1,163 @@
+.gate-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1e1e1e;
+  color: #ffffff;
+  padding: 20px;
+  overflow: hidden;
+
+  .header {
+    margin-bottom: 20px;
+    
+    h1 {
+      font-size: 32px;
+      margin: 0 0 10px 0;
+      color: #4fc3f7;
+    }
+
+    .header-info {
+      display: flex;
+      gap: 20px;
+      font-size: 14px;
+      color: #aaaaaa;
+      
+      .gate-count {
+        font-weight: 600;
+        color: #66bb6a;
+      }
+    }
+  }
+
+  .loading-message {
+    text-align: center;
+    padding: 40px 20px;
+    
+    p {
+      font-size: 18px;
+      color: #4fc3f7;
+      margin: 0;
+    }
+  }
+
+  .search-bar {
+    margin-bottom: 20px;
+    
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 16px;
+      border: 2px solid #333333;
+      border-radius: 8px;
+      background: #2a2a2a;
+      color: #ffffff;
+      outline: none;
+      transition: border-color 0.3s;
+
+      &:focus {
+        border-color: #4fc3f7;
+      }
+
+      &::placeholder {
+        color: #666666;
+      }
+    }
+  }
+
+  .gates-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .gates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    padding-bottom: 20px;
+  }
+
+  .gate-card {
+    background: #2a2a2a;
+    border: 2px solid #333333;
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &:hover {
+      border-color: #4fc3f7;
+      background: #303030;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(79, 195, 247, 0.2);
+    }
+
+    .gate-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #404040;
+
+      h3 {
+        margin: 0;
+        font-size: 24px;
+        color: #4fc3f7;
+      }
+
+      .jetway-badge {
+        background: #66bb6a;
+        color: #1e1e1e;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+    }
+
+    .gate-info {
+      margin-bottom: 12px;
+
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 14px;
+
+        .label {
+          color: #aaaaaa;
+          font-weight: 500;
+        }
+
+        .value {
+          color: #ffffff;
+          text-align: right;
+          max-width: 60%;
+          
+          &.airline-codes {
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+        }
+      }
+    }
+
+    .gate-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+
+      .feature {
+        background: #404040;
+        color: #ffffff;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+    }
+  }
+}

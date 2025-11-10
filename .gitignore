@@ -11,3 +11,5 @@ obj/
 **/assets/airports/*.json
 *_PackageInt/
 *Packages/
+*node_modules/
+*dist/

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AssetPackage Version="0.1.10">
+	<ItemSettings>
+		<ContentType>MISC</ContentType>
+		<Title>Ground Equipment Handler App</Title>
+		<Manufacturer/>
+		<Creator>XperiaPlay</Creator>
+	</ItemSettings>
+	<Flags>
+		<VisibleInStore>false</VisibleInStore>
+		<CanBeReferenced>true</CanBeReferenced>
+	</Flags>
+	<PackageOrderHint>MISC</PackageOrderHint>
+	<AssetGroups>
+		<AssetGroup Name="ContentInfo">
+			<Type Version="0">ContentInfo</Type>
+			<Flags>
+				<FSXCompatibility>false</FSXCompatibility>
+			</Flags>
+			<AssetDir>PackageDefinitions\XperiaPlay-efb-GroundEquipmentApp\ContentInfo</AssetDir>
+			<OutputDir>ContentInfo\XperiaPlay-efb-GroundEquipmentApp</OutputDir>
+		</AssetGroup>
+		<AssetGroup Name="efb_apps_template">
+			<Type Version="0">Copy</Type>
+			<Flags>
+				<FSXCompatibility>false</FSXCompatibility>
+			</Flags>
+			<AssetDir>PackageSources\TemplateApp\dist\</AssetDir>
+			<OutputDir>.\html_ui\efb_ui\efb_apps\TemplateApp\</OutputDir>
+		</AssetGroup>
+	</AssetGroups>
+</AssetPackage>
