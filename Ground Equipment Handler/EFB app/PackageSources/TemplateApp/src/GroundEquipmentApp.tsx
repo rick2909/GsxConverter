@@ -12,6 +12,9 @@ import {
 import { FSComponent, VNode } from "@microsoft/msfs-sdk";
 import { GateList } from "./Components/GateList";
 import { GateDetail } from "./Components/GateDetail";
+import { DeIceList } from "./Components/DeIceList";
+import { DeIceDetail } from "./Components/DeIceDetail";
+import { MetadataView } from "./Components/MetadataView";
 import { AirportData } from "./types/GateData";
 
 import "./GroundEquipmentApp.scss";
@@ -46,6 +49,15 @@ class GroundEquipmentAppView extends AppView<GroundEquipmentAppViewProps> {
     this.appViewService.registerPage("GateDetail", () => (
       <GateDetail appViewService={this.appViewService} />
     ));
+    this.appViewService.registerPage("DeIceList", () => (
+      <DeIceList appViewService={this.appViewService} airportData={this.props.airportData} />
+    ));
+    this.appViewService.registerPage("DeIceDetail", () => (
+      <DeIceDetail appViewService={this.appViewService} />
+    ));
+    this.appViewService.registerPage("MetadataView", () => (
+      <MetadataView appViewService={this.appViewService} airportData={this.props.airportData} />
+    ));
   }
 
   /**
@@ -54,7 +66,14 @@ class GroundEquipmentAppView extends AppView<GroundEquipmentAppViewProps> {
    * Default behavior : nothing
    */
   public onOpen(): void {
-    //
+    console.log("GroundEquipmentAppView onOpen - airportData:", {
+      airport: this.props.airportData.airport,
+      gates: this.props.airportData.gates?.length,
+      groups: this.props.airportData.gate_groups?.length
+    });
+    
+    // Force open the default view to ensure it re-renders with loaded data
+    this.appViewService.open(this.defaultView);
   }
 
   /**
@@ -130,7 +149,7 @@ class GroundEquipmentApp extends App {
    * WARM : App -> AppView are loaded but not rendered into DOM
    * HOT : App -> AppView -> Pages are rendered and injected into DOM
    */
-  public BootMode = AppBootMode.WARM;
+  public BootMode = AppBootMode.HOT;
 
   /**
    * Optional attribute
@@ -149,18 +168,37 @@ class GroundEquipmentApp extends App {
    * @returns Promise<void>
    */
   public async install(_props: AppInstallProps): Promise<void> {
-    Efb.loadCss(`${BASE_URL}/GroundEquipmentApp.css`);
+    console.log("Ground Equipment Handler: Starting installation...");
+    console.log("BASE_URL:", BASE_URL);
+    
+    try {
+      const cssPath = `${BASE_URL}/GroundEquipmentApp.css`;
+      console.log("Loading CSS from:", cssPath);
+      await Efb.loadCss(cssPath);
+      console.log("✅ CSS loaded successfully");
+    } catch (error) {
+      console.error("❌ Failed to load CSS:", error);
+    }
     
     // Load the airport gate data
     try {
+      console.log("Fetching gate data from:", `${BASE_URL}/Assets/eham-gates.json`);
       const response = await fetch(`${BASE_URL}/Assets/eham-gates.json`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       this.airportData = await response.json();
-      console.log("Loaded airport data:", this.airportData?.airport);
+      console.log("✅ Loaded airport data successfully!");
+      console.log("Airport:", this.airportData?.airport);
+      console.log("Gates count:", this.airportData?.gates?.length);
+      console.log("Groups count:", this.airportData?.gate_groups?.length);
     } catch (error) {
-      console.error("Failed to load airport data:", error);
+      console.error("❌ Failed to load airport data:", error);
       // Provide fallback empty data
       this.airportData = {
-        airport: "Unknown",
+        airport: "Error Loading Data",
         version: "1.0",
         gates: []
       };

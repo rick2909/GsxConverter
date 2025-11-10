@@ -29,6 +29,22 @@ Run this command in GroundEquipmentApp\ folder to build the app each time you ma
 $ npm run watch
 ```
 ______________
+### Test in Browser
+
+To test the app in a regular web browser (easier debugging with DevTools):
+
+1. Build the app: `npm run build`
+2. Start a local server in the `dist` folder:
+   ```bash
+   cd dist
+   npx http-server -p 8080 --cors
+   ```
+3. Open your browser to: `http://localhost:8080`
+4. Open DevTools (F12) to see console logs and inspect elements
+
+**Note:** Some EFB-specific features may not work in browser, but layout and most functionality will.
+
+______________
 ### Environment variables
 
 You can edit your environment variables in `GroundEquipmentApp\.env`

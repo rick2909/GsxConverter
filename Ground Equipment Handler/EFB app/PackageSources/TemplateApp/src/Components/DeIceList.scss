@@ -1,0 +1,194 @@
+.deice-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1e1e1e;
+  color: #ffffff;
+  padding: 20px;
+  overflow: hidden;
+
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #333333;
+
+    .header-content {
+      flex: 1;
+      
+      h1 {
+        font-size: 32px;
+        margin: 0 0 10px 0;
+        color: #ff9800;
+      }
+
+      .header-info {
+        display: flex;
+        gap: 20px;
+        font-size: 14px;
+        color: #aaaaaa;
+        
+        .deice-count {
+          font-weight: 600;
+          color: #ff9800;
+        }
+
+        .airport {
+          color: #4fc3f7;
+        }
+      }
+    }
+  }
+
+  .no-data-message {
+    text-align: center;
+    padding: 60px 20px;
+    
+    p {
+      font-size: 18px;
+      color: #aaaaaa;
+      margin: 0;
+    }
+  }
+
+  .search-bar {
+    margin-bottom: 20px;
+    
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 16px;
+      border: 2px solid #333333;
+      border-radius: 8px;
+      background: #2a2a2a;
+      color: #ffffff;
+      outline: none;
+      transition: border-color 0.3s;
+
+      &:focus {
+        border-color: #ff9800;
+      }
+
+      &::placeholder {
+        color: #666666;
+      }
+    }
+  }
+
+  .deices-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .deices-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    padding-bottom: 20px;
+  }
+
+  .deice-card {
+    background: #2a2a2a;
+    border: 2px solid #ff9800;
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &:hover {
+      border-color: #ffa726;
+      background: #303030;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+    }
+
+    .deice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #404040;
+
+      h3 {
+        margin: 0;
+        font-size: 22px;
+        color: #ff9800;
+      }
+
+      .deice-badge {
+        background: #ff9800;
+        color: #1e1e1e;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+    }
+
+    .deice-info {
+      margin-bottom: 12px;
+
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 14px;
+
+        .label {
+          color: #aaaaaa;
+          font-weight: 500;
+        }
+
+        .value {
+          color: #ffffff;
+          text-align: right;
+          max-width: 60%;
+          
+          &.coordinates {
+            font-size: 12px;
+            font-family: monospace;
+          }
+        }
+      }
+    }
+
+    .deice-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+
+      .feature {
+        background: #ff6f00;
+        color: #ffffff;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+    }
+  }
+
+  /* Custom scrollbar */
+  .deices-container::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .deices-container::-webkit-scrollbar-track {
+    background: #2a2a2a;
+    border-radius: 4px;
+  }
+
+  .deices-container::-webkit-scrollbar-thumb {
+    background: #ff9800;
+    border-radius: 4px;
+
+    &:hover {
+      background: #ffa726;
+    }
+  }
+}

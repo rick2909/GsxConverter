@@ -28,7 +28,7 @@ const baseConfig = {
     ".json": "copy",
   },
   target: "es2017",
-  define: { BASE_URL: `"coui://html_ui/efb_ui/efb_apps/GroundEquipmentApp"` },
+  define: { BASE_URL: `"coui://html_ui/efb_ui/efb_apps/TemplateApp"` },
   plugins: [
     copyStaticFiles({
       src: "./src/Assets",
@@ -51,7 +51,7 @@ const baseConfig = {
             url: "copy",
           }),
           postcssPrefixSelector({
-            prefix: `.efb-view.${__dirname.split("\\").at(-1)}`,
+            prefix: `.efb-view.GroundEquipmentApp`,
           }),
         ]).process(source, { from: undefined });
         return css;

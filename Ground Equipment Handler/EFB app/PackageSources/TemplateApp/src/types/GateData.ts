@@ -109,8 +109,44 @@ export interface Gate {
   properties: Record<string, any>;
 }
 
+export interface DeIceArea {
+  id: string;
+  ui_name: string;
+  type: string | null;
+  is_deice_area: boolean;
+  position: Position;
+  parking_system: string;
+  radius: number;
+  parking_system_stop_position: Position;
+  parking_system_object_position: Position;
+  user_customized: boolean;
+  properties: Record<string, any>;
+}
+
+export interface Metadata {
+  'general.creator'?: string;
+  'general.scenario'?: string;
+  'general.disable_static_docks'?: string;
+  'general.notes'?: string;
+  [key: string]: string | undefined;
+}
+
+export interface JetwayHeights {
+  [jetwayId: string]: number;
+}
+
+export interface GateGroup {
+  id: string;
+  members: string[];
+  properties: Record<string, any>;
+}
+
 export interface AirportData {
   airport: string;
   version: string;
   gates: Gate[];
+  deices?: DeIceArea[];
+  metadata?: Metadata;
+  jetway_rootfloor_heights?: JetwayHeights;
+  gate_groups?: GateGroup[];
 }
