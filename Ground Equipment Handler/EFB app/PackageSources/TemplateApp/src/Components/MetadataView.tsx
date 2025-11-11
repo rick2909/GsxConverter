@@ -33,7 +33,7 @@ export class MetadataView extends GamepadUiView<HTMLDivElement, MetadataViewProp
             key="Back to Gates"
             type="secondary"
             callback={(): void => {
-              this.props.appViewService.open('GateList');
+              this.props.appViewService.goBack();
             }}
           />
           <h1>Airport Configuration</h1>
