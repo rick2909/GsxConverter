@@ -1,0 +1,15 @@
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.log
+*.db
+*.idea/
+*.Rider/
+*sample-files/
+**/assets/airports/*.json
+*_PackageInt/
+*Packages/
+*node_modules/
+*dist/

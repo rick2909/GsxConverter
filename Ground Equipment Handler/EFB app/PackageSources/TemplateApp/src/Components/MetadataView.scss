@@ -1,0 +1,322 @@
+.metadata-view {
+  width: 100%;
+  height: 100%;
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #2a2a2a;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #9c27b0;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #ba68c8;
+  }
+
+  .metadata-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .back-button {
+      align-self: flex-start;
+      padding: 8px 16px;
+      background-color: rgba(255, 255, 255, 0.15);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.25);
+        transform: translateX(-4px);
+      }
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+      color: white;
+    }
+
+    .airport-info {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+
+      .airport-code {
+        font-size: 18px;
+        font-weight: 700;
+        color: #ffffff;
+        background-color: rgba(0, 0, 0, 0.3);
+        padding: 4px 12px;
+        border-radius: 6px;
+        letter-spacing: 1px;
+      }
+
+      .version {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.85);
+        padding: 4px 10px;
+        background-color: rgba(255, 255, 255, 0.15);
+        border-radius: 4px;
+      }
+    }
+  }
+
+  .metadata-content {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    flex: 1;
+  }
+
+  .metadata-section {
+    background-color: #2a2a2a;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    border: 1px solid #3a3a3a;
+
+    h2 {
+      margin: 0 0 16px 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: #9c27b0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .icon {
+        font-size: 22px;
+      }
+    }
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+  }
+
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    border: 1px solid #404040;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #9c27b0;
+      box-shadow: 0 0 8px rgba(156, 39, 176, 0.3);
+    }
+
+    &.highlight {
+      background: linear-gradient(135deg, rgba(156, 39, 176, 0.1) 0%, rgba(123, 31, 162, 0.1) 100%);
+      border-color: #9c27b0;
+    }
+
+    .label {
+      font-size: 12px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+    }
+
+    .value {
+      font-size: 16px;
+      color: #e0e0e0;
+      font-weight: 600;
+    }
+  }
+
+  .notes {
+    margin-top: 16px;
+    padding: 16px;
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    border-left: 4px solid #9c27b0;
+
+    .label {
+      display: block;
+      font-size: 12px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .notes-content {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #e0e0e0;
+    }
+  }
+
+  /* Statistics Section */
+  .stats-section {
+    background: linear-gradient(135deg, rgba(156, 39, 176, 0.05) 0%, rgba(123, 31, 162, 0.05) 100%);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+  }
+
+  .stat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 16px rgba(156, 39, 176, 0.4);
+    }
+
+    &.deice {
+      background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+
+      &:hover {
+        box-shadow: 0 6px 16px rgba(255, 152, 0, 0.4);
+      }
+    }
+
+    &.jetway {
+      background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+
+      &:hover {
+        box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4);
+      }
+    }
+
+    .stat-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: white;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.9);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 500;
+    }
+  }
+
+  /* Jetway Section */
+  .jetway-section {
+    h2 {
+      color: #2196f3;
+    }
+  }
+
+  .jetway-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .jetway-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 12px;
+    background-color: #1e1e1e;
+    border-radius: 8px;
+
+    /* Custom scrollbar for jetway list */
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #2a2a2a;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #2196f3;
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: #42a5f5;
+    }
+  }
+
+  .jetway-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background-color: #2a2a2a;
+    border-radius: 6px;
+    border: 1px solid #404040;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #2196f3;
+      background-color: rgba(33, 150, 243, 0.1);
+      transform: translateX(4px);
+    }
+
+    .jetway-id {
+      font-size: 13px;
+      color: #e0e0e0;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .jetway-height {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2196f3;
+      background-color: rgba(33, 150, 243, 0.15);
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-left: 8px;
+    }
+  }
+}
