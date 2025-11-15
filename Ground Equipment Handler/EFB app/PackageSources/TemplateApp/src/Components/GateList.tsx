@@ -1,5 +1,5 @@
 import { TTButton, GamepadUiView, RequiredProps, TVNode, UiViewProps } from "@efb/efb-api";
-import { FSComponent } from "@microsoft/msfs-sdk";
+import { FSComponent, Subject } from "@microsoft/msfs-sdk";
 import { AirportData, Gate, GateGroup } from "../types/GateData";
 import "./GateList.scss";
 
@@ -11,24 +11,39 @@ interface GateListProps extends RequiredProps<UiViewProps, "appViewService"> {
 export class GateList extends GamepadUiView<HTMLDivElement, GateListProps> {
   public readonly tabName = GateList.name;
 
-  private filterText = "";
-  private selectedGroupId: string | null = null;
-  private viewMode: 'groups' | 'gates' = 'groups'; // New: track current view mode
+  private filterText = Subject.create("");
+  private selectedGroupId = Subject.create<string | null>(null);
+
+  /** @inheritdoc */
+  public onAfterRender(node: TVNode): void {
+    super.onAfterRender(node);
+    
+    // Subscribe to state changes and force re-render
+    this.filterText.sub(() => {
+      this.props.appViewService.open("GateList");
+    });
+    
+    this.selectedGroupId.sub(() => {
+      this.props.appViewService.open("GateList");
+    });
+  }
 
   private getFilteredGates(): Gate[] {
     let gates = this.props.airportData.gates;
 
     // Filter by selected group if groups are defined and one is selected
-    if (this.selectedGroupId && this.props.airportData.gate_groups) {
-      const selectedGroup = this.props.airportData.gate_groups.find(g => g.id === this.selectedGroupId);
+    const selectedGroupId = this.selectedGroupId.get();
+    if (selectedGroupId && this.props.airportData.gate_groups) {
+      const selectedGroup = this.props.airportData.gate_groups.find(g => g.id === selectedGroupId);
       if (selectedGroup) {
         gates = gates.filter(gate => selectedGroup.members.includes(gate.gate_id));
       }
     }
 
     // Apply search filter
-    if (this.filterText) {
-      const searchTerm = this.filterText.toLowerCase();
+    const filterText = this.filterText.get();
+    if (filterText) {
+      const searchTerm = filterText.toLowerCase();
       gates = gates.filter(gate => 
         gate.gate_id.toLowerCase().includes(searchTerm) ||
         gate.ui_name.toLowerCase().includes(searchTerm) ||
@@ -80,7 +95,7 @@ export class GateList extends GamepadUiView<HTMLDivElement, GateListProps> {
       const hasGroups = this.hasGroups();
       
       // Determine view mode: if groups exist and no specific group/search is selected, show grouped view
-      const showGroupedView = hasGroups && !this.selectedGroupId && !this.filterText;
+      const showGroupedView = hasGroups && !this.selectedGroupId.get() && !this.filterText.get();
       
       console.log("GateList render - isLoading:", isLoading, "hasGroups:", hasGroups, "showGroupedView:", showGroupedView, "filteredGates:", filteredGates.length);
     
@@ -98,6 +113,9 @@ export class GateList extends GamepadUiView<HTMLDivElement, GateListProps> {
                 key="De-Ice Areas"
                 type="primary"
                 callback={(): void => {
+                  console.log("✅ De-Ice Areas button clicked");
+                  (window as any).Coherent?.call("FOCUS_INPUT_FIELD", "");
+                  alert("De-Ice button clicked!");
                   this.props.appViewService.open("DeIceList");
                 }}
               />
@@ -107,6 +125,8 @@ export class GateList extends GamepadUiView<HTMLDivElement, GateListProps> {
                 key="Metadata"
                 type="secondary"
                 callback={(): void => {
+                  console.log("✅ Metadata button clicked");
+                  alert("Metadata button clicked!");
                   this.props.appViewService.open("MetadataView");
                 }}
               />
@@ -133,18 +153,19 @@ export class GateList extends GamepadUiView<HTMLDivElement, GateListProps> {
         )}
 
         {/* Back to Groups button when viewing specific group */}
-        {!isLoading && hasGroups && this.selectedGroupId && (
+        {!isLoading && hasGroups && this.selectedGroupId.get() && (
           <div class="back-to-groups">
-            <button
+            <TTButton
+              key="back-to-groups"
               class="back-button"
-              onClick={(): void => {
-                this.selectedGroupId = null;
-                this.filterText = "";
-                this.props.appViewService.open("GateList");
+              type="secondary"
+              label="← Back to Groups"
+              callback={(): void => {
+                console.log("Back to Groups button clicked");
+                this.selectedGroupId.set(null);
+                this.filterText.set("");
               }}
-            >
-              ← Back to Groups
-            </button>
+            />
           </div>
         )}
 
@@ -153,9 +174,9 @@ export class GateList extends GamepadUiView<HTMLDivElement, GateListProps> {
             type="text"
             placeholder="Search by gate ID, name, or airline..."
             onInput={(e: any): void => {
-              this.filterText = (e.target as HTMLInputElement).value;
-              // Force re-render by reopening current view
-              this.props.appViewService.open("GateList");
+              const value = (e.target as HTMLInputElement).value;
+              console.log("Search input changed:", value);
+              this.filterText.set(value);
             }}
           />
         </div>
@@ -175,29 +196,24 @@ export class GateList extends GamepadUiView<HTMLDivElement, GateListProps> {
                         <h3>{group.id}</h3>
                         <span class="member-count">{group.members.length} gates</span>
                       </div>
-                      <button
+                      <TTButton
+                        key={`viewall-${group.id}`}
                         class="view-all-button"
-                        onClick={(): void => {
-                          this.selectedGroupId = group.id;
-                          this.props.appViewService.open("GateList");
+                        type="primary"
+                        label="View All →"
+                        callback={(): void => {
+                          console.log("View All button clicked for group:", group.id);
+                          this.selectedGroupId.set(group.id);
                         }}
-                      >
-                        View All →
-                      </button>
+                      />
                     </div>
                     
                     <div class="group-gates-preview">
                       {previewGates.map((gate) => {
                         const gateType = this.getGateType(gate);
+                        const buttonKey = `${gate.gate_id}-${gateType}-${gate.max_wingspan}`;
                         return (
-                          <div
-                            key={gate.gate_id}
-                            class="mini-gate-card"
-                            onClick={(): void => {
-                              (window as any).selectedGate = gate;
-                              this.props.appViewService.open("GateDetail");
-                            }}
-                          >
+                          <div key={gate.gate_id} class="mini-gate-card">
                             <div class="mini-gate-id">{gate.gate_id.toUpperCase()}</div>
                             <div class="mini-gate-badges">
                               <span class={`badge badge-${gateType}`}>
@@ -205,6 +221,17 @@ export class GateList extends GamepadUiView<HTMLDivElement, GateListProps> {
                               </span>
                               <span class="badge badge-wingspan">{gate.max_wingspan}m</span>
                             </div>
+                            <TTButton
+                              key={buttonKey}
+                              class="full-overlay-button"
+                              label=""
+                              callback={(): void => {
+                                console.log("Mini gate card clicked:", gate.gate_id);
+                                (window as any).selectedGate = gate;
+                                console.log("Opening GateSelection view");
+                                this.props.appViewService.open("GateSelection");
+                              }}
+                            />
                           </div>
                         );
                       })}
@@ -227,15 +254,9 @@ export class GateList extends GamepadUiView<HTMLDivElement, GateListProps> {
             <div class="gates-grid-compact">
               {filteredGates.map((gate) => {
                 const gateType = this.getGateType(gate);
+                const buttonKey = `${gate.gate_id}-${gateType}-${gate.max_wingspan}`;
                 return (
-                  <div
-                    key={gate.gate_id}
-                    class="compact-gate-card"
-                    onClick={(): void => {
-                      (window as any).selectedGate = gate;
-                      this.props.appViewService.open("GateDetail");
-                    }}
-                  >
+                  <div key={gate.gate_id} class="compact-gate-card">
                     <div class="compact-gate-header">
                       <h4>{gate.gate_id.toUpperCase()}</h4>
                     </div>
@@ -250,6 +271,19 @@ export class GateList extends GamepadUiView<HTMLDivElement, GateListProps> {
                     {gate.airline_codes && (
                       <div class="compact-gate-airlines">{gate.airline_codes}</div>
                     )}
+                    
+                    <TTButton
+                      key={buttonKey}
+                      class="full-overlay-button"
+                      label=""
+                      type="secondary"
+                      callback={(): void => {
+                        console.log("Compact gate card clicked:", gate.gate_id);
+                        (window as any).selectedGate = gate;
+                        console.log("Opening GateSelection view");
+                        this.props.appViewService.open("GateSelection");
+                      }}
+                    />
                   </div>
                 );
               })}

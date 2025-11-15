@@ -12,6 +12,8 @@ import {
 import { FSComponent, VNode } from "@microsoft/msfs-sdk";
 import { GateList } from "./Components/GateList";
 import { GateDetail } from "./Components/GateDetail";
+import { GateSelection } from "./Components/GateSelection";
+import { GateOperations } from "./Components/GateOperations";
 import { DeIceList } from "./Components/DeIceList";
 import { DeIceDetail } from "./Components/DeIceDetail";
 import { MetadataView } from "./Components/MetadataView";
@@ -48,6 +50,12 @@ class GroundEquipmentAppView extends AppView<GroundEquipmentAppViewProps> {
     ));
     this.appViewService.registerPage("GateDetail", () => (
       <GateDetail appViewService={this.appViewService} />
+    ));
+    this.appViewService.registerPage("GateSelection", () => (
+      <GateSelection appViewService={this.appViewService} />
+    ));
+    this.appViewService.registerPage("GateOperations", () => (
+      <GateOperations appViewService={this.appViewService} />
     ));
     this.appViewService.registerPage("DeIceList", () => (
       <DeIceList appViewService={this.appViewService} airportData={this.props.airportData} />

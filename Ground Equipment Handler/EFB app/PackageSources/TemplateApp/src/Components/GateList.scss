@@ -124,7 +124,7 @@
   .back-to-groups {
     margin-bottom: 16px;
 
-    .back-button {
+    tt-button.back-button {
       padding: 10px 20px;
       background-color: rgba(79, 195, 247, 0.1);
       color: #4fc3f7;
@@ -193,7 +193,7 @@
         }
       }
 
-      .view-all-button {
+      tt-button.view-all-button {
         padding: 8px 16px;
         background: #4fc3f7;
         color: #1e1e1e;
@@ -218,12 +218,16 @@
     }
 
     .mini-gate-card {
+      position: relative;
       background: #1e1e1e;
       border: 1px solid #404040;
       border-radius: 8px;
       padding: 10px;
       cursor: pointer;
       transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
 
       &:hover {
         border-color: #4fc3f7;
@@ -235,7 +239,6 @@
         font-size: 14px;
         font-weight: 700;
         color: #4fc3f7;
-        margin-bottom: 6px;
         text-transform: uppercase;
       }
 
@@ -243,6 +246,17 @@
         display: flex;
         gap: 4px;
         flex-wrap: wrap;
+      }
+
+      tt-button.full-overlay-button {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        border: none;
+        opacity: 0;
+        cursor: pointer;
       }
     }
 
@@ -269,6 +283,7 @@
   }
 
   .compact-gate-card {
+    position: relative;
     background: #2a2a2a;
     border: 2px solid #333333;
     border-radius: 10px;
@@ -308,6 +323,17 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    tt-button.full-overlay-button {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      border: none;
+      opacity: 0;
+      cursor: pointer;
     }
   }
 
