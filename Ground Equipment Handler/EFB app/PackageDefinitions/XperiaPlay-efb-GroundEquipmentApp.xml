@@ -25,8 +25,8 @@
 			<Flags>
 				<FSXCompatibility>false</FSXCompatibility>
 			</Flags>
-			<AssetDir>PackageSources\TemplateApp\dist\</AssetDir>
-			<OutputDir>.\html_ui\efb_ui\efb_apps\TemplateApp\</OutputDir>
+			<AssetDir>Packages\xperiaplay-efb-groundequipmentapp\TemplateApp\</AssetDir>
+			<OutputDir>.\html_ui\efb_ui\efb_apps\GroundEquipmentHandler\</OutputDir>
 		</AssetGroup>
 	</AssetGroups>
 </AssetPackage>

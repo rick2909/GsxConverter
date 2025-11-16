@@ -1,0 +1,276 @@
+.gate-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1e1e1e;
+  color: #ffffff;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.gate-list .header {
+  margin-bottom: 20px;
+}
+
+.gate-list .header h1 {
+  font-size: 32px;
+  margin: 0 0 10px 0;
+  color: #4fc3f7;
+}
+
+.gate-list .header-info {
+  display: flex;
+  gap: 20px;
+  font-size: 14px;
+  color: #aaaaaa;
+}
+
+.gate-list .gate-count {
+  font-weight: 600;
+  color: #66bb6a;
+}
+
+.gate-list .back-to-groups {
+  margin-bottom: 16px;
+}
+
+.gate-list .back-button {
+  padding: 10px 20px;
+  background-color: rgba(79, 195, 247, 0.1);
+  color: #4fc3f7;
+  border: 1px solid #4fc3f7;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.gate-list .back-button:hover {
+  background-color: rgba(79, 195, 247, 0.2);
+  transform: translateX(-4px);
+}
+
+.gate-list .search-bar {
+  margin-bottom: 20px;
+}
+
+.gate-list .search-bar input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 2px solid #333333;
+  border-radius: 8px;
+  background: #2a2a2a;
+  color: #ffffff;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.gate-list .search-bar input:focus {
+  border-color: #4fc3f7;
+}
+
+.gate-list .search-bar input::placeholder {
+  color: #666666;
+}
+
+.gate-list .gates-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* GROUP CARDS */
+.gate-list .groups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 20px;
+  padding-bottom: 20px;
+}
+
+.gate-list .group-card {
+  background: #2a2a2a;
+  border: 2px solid #3a3a3a;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.gate-list .group-card:hover {
+  border-color: #4fc3f7;
+  box-shadow: 0 4px 12px rgba(79, 195, 247, 0.2);
+}
+
+.gate-list .group-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #404040;
+}
+
+.gate-list .group-title-section {
+  flex: 1;
+}
+
+.gate-list .group-title-section h3 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  color: #4fc3f7;
+  font-weight: 600;
+}
+
+.gate-list .member-count {
+  font-size: 13px;
+  color: #999;
+  font-weight: 500;
+}
+
+.gate-list .view-all-button {
+  padding: 8px 16px;
+  background: #4fc3f7;
+  color: #1e1e1e;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.gate-list .view-all-button:hover {
+  background: #6dd5ff;
+  transform: translateX(4px);
+}
+
+.gate-list .group-gates-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.gate-list .mini-gate-card {
+  background: #1e1e1e;
+  border: 1px solid #404040;
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gate-list .mini-gate-card:hover {
+  border-color: #4fc3f7;
+  background: #252525;
+  transform: translateY(-2px);
+}
+
+.gate-list .mini-gate-id {
+  font-size: 14px;
+  font-weight: 700;
+  color: #4fc3f7;
+  text-transform: uppercase;
+}
+
+.gate-list .mini-gate-badges {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.gate-list .more-gates-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(79, 195, 247, 0.1);
+  border: 1px dashed #4fc3f7;
+  border-radius: 8px;
+  padding: 10px;
+  color: #4fc3f7;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* COMPACT GATE CARDS */
+.gate-list .gates-grid-compact {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  padding-bottom: 20px;
+}
+
+.gate-list .compact-gate-card {
+  background: #2a2a2a;
+  border: 2px solid #333333;
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gate-list .compact-gate-card:hover {
+  border-color: #4fc3f7;
+  background: #303030;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(79, 195, 247, 0.2);
+}
+
+.gate-list .compact-gate-header h4 {
+  margin: 0;
+  font-size: 18px;
+  color: #4fc3f7;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.gate-list .compact-gate-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.gate-list .compact-gate-airlines {
+  font-size: 11px;
+  color: #999;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* BADGES */
+.gate-list .badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.gate-list .badge-jetway {
+  background: #66bb6a;
+  color: #1e1e1e;
+}
+
+.gate-list .badge-bus {
+  background: #ff9800;
+  color: #1e1e1e;
+}
+
+.gate-list .badge-walk {
+  background: #9e9e9e;
+  color: #1e1e1e;
+}
+
+.gate-list .badge-wingspan {
+  background: #2196f3;
+  color: white;
+  font-size: 10px;
+}

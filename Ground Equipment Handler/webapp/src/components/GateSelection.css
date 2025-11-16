@@ -1,0 +1,182 @@
+.gate-selection {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1e1e1e;
+  color: #ffffff;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.gate-selection .selection-header {
+  margin-bottom: 24px;
+}
+
+.gate-selection .back-button {
+  padding: 10px 20px;
+  background-color: rgba(79, 195, 247, 0.1);
+  color: #4fc3f7;
+  border: 1px solid #4fc3f7;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.gate-selection .back-button:hover {
+  background-color: rgba(79, 195, 247, 0.2);
+  transform: translateX(-4px);
+}
+
+.gate-selection .header-content {
+  margin-top: 16px;
+}
+
+.gate-selection .header-content h1 {
+  font-size: 36px;
+  margin: 0 0 8px 0;
+  color: #4fc3f7;
+  font-weight: 700;
+}
+
+.gate-selection .gate-name {
+  font-size: 18px;
+  color: #aaaaaa;
+  margin: 0;
+}
+
+.gate-selection .error-message {
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+  color: #ff5252;
+}
+
+.gate-selection .selection-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.gate-selection .gate-summary {
+  background: #2a2a2a;
+  border: 2px solid #3a3a3a;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.gate-selection .summary-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #404040;
+}
+
+.gate-selection .summary-item:last-child {
+  border-bottom: none;
+}
+
+.gate-selection .summary-item .label {
+  font-size: 14px;
+  color: #999999;
+  font-weight: 500;
+}
+
+.gate-selection .summary-item .value {
+  font-size: 14px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.gate-selection .action-section h2 {
+  font-size: 20px;
+  margin: 0 0 16px 0;
+  color: #4fc3f7;
+  font-weight: 600;
+}
+
+.gate-selection .action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gate-selection .action-btn {
+  background: #2a2a2a;
+  border: 2px solid #4fc3f7;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #ffffff;
+}
+
+.gate-selection .action-btn:hover {
+  background: #303030;
+  border-color: #6dd5ff;
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(79, 195, 247, 0.3);
+}
+
+.gate-selection .action-btn:active {
+  transform: translateX(2px);
+}
+
+.gate-selection .action-btn .icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.gate-selection .action-btn .text {
+  font-size: 18px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.gate-selection .confirm-section {
+  display: flex;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 2px solid #3a3a3a;
+  margin-top: auto;
+}
+
+.gate-selection .confirm-section button {
+  flex: 1;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.gate-selection .confirm-section button:active {
+  transform: scale(0.98);
+}
+
+.gate-selection .cancel-btn {
+  background: #404040;
+  color: #ffffff;
+}
+
+.gate-selection .cancel-btn:hover {
+  background: #505050;
+}
+
+.gate-selection .confirm-btn {
+  background: #66bb6a;
+  color: #1e1e1e;
+}
+
+.gate-selection .confirm-btn:hover {
+  background: #81c784;
+  box-shadow: 0 4px 12px rgba(102, 187, 106, 0.4);
+}
