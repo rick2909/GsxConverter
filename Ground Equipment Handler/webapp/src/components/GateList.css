@@ -10,6 +10,15 @@
 
 .gate-list .header {
   margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.gate-list .header-left {
+  flex: 1;
+  min-width: 0;
 }
 
 .gate-list .header h1 {
@@ -30,8 +39,49 @@
   color: #66bb6a;
 }
 
-.gate-list .back-to-groups {
+.gate-list .header-right {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.gate-list .nav-button {
+  padding: 10px 20px;
+  background-color: rgba(79, 195, 247, 0.1);
+  color: #4fc3f7;
+  border: 1px solid #4fc3f7;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.gate-list .nav-button:hover {
+  background-color: rgba(79, 195, 247, 0.2);
+  transform: translateY(-2px);
+}
+
+.gate-list .nav-button.active {
+  background-color: #4fc3f7;
+  color: #1e1e1e;
+}
+
+.gate-list .controls-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 16px;
+}
+
+.gate-list .controls-row .spacer {
+  width: 0;
+}
+
+.gate-list .search-bar {
+  flex: 1;
+  min-width: 0;
 }
 
 .gate-list .back-button {
@@ -57,8 +107,8 @@
 
 .gate-list .search-bar input {
   width: 100%;
-  padding: 12px 16px;
-  font-size: 16px;
+  padding: 10px 16px;
+  font-size: 14px;
   border: 2px solid #333333;
   border-radius: 8px;
   background: #2a2a2a;

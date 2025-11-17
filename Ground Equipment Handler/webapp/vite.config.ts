@@ -41,6 +41,18 @@ export default defineConfig({
     emptyOutDir: true,
     target: 'es2017', // Coherent GT in MSFS uses older JavaScript
     minify: 'terser', // Better compatibility than esbuild
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Keep Font Awesome in a separate chunk to avoid bloating main bundle
+          'fontawesome': [
+            '@fortawesome/fontawesome-svg-core',
+            '@fortawesome/free-solid-svg-icons',
+            '@fortawesome/react-fontawesome'
+          ]
+        }
+      }
+    }
   },
   server: {
     port: 3000,

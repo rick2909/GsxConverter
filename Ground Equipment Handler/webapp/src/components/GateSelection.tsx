@@ -1,4 +1,6 @@
 import { Gate } from '../types/GateData';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Icons } from '../fontawesome';
 import './GateSelection.css';
 
 interface GateSelectionProps {
@@ -40,7 +42,7 @@ export default function GateSelection({ gate, onBack, onConfirm }: GateSelection
     <div className="gate-selection">
       <div className="selection-header">
         <button className="back-button" onClick={onBack}>
-          ← Back
+          <FontAwesomeIcon icon={Icons.BACK} /> Back
         </button>
         <div className="header-content">
           <h1>{gate.gate_id}</h1>
@@ -76,17 +78,17 @@ export default function GateSelection({ gate, onBack, onConfirm }: GateSelection
           <h2>Options</h2>
           <div className="action-buttons">
             <button className="action-btn" onClick={handleFollowMe}>
-              <span className="icon">🚗</span>
+              <span className="icon"><FontAwesomeIcon icon={Icons.CAR} /></span>
               <span className="text">Request Follow Me</span>
             </button>
 
             <button className="action-btn" onClick={handleShowSpot}>
-              <span className="icon">📍</span>
+              <span className="icon"><FontAwesomeIcon icon={Icons.LOCATION} /></span>
               <span className="text">Show Me This Spot</span>
             </button>
 
             <button className="action-btn" onClick={handleWarp}>
-              <span className="icon">✈️</span>
+              <span className="icon"><FontAwesomeIcon icon={Icons.PLANE} /></span>
               <span className="text">Warp Me There</span>
             </button>
           </div>

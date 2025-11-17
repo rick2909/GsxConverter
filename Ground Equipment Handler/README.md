@@ -21,7 +21,9 @@ Ground Equipment Handler/
 │   │   ├── components/                        # React components
 │   │   │   ├── GateList.tsx                   # Gate browsing view
 │   │   │   ├── GateSelection.tsx              # Gate selection options
-│   │   │   └── GateOperations.tsx             # At-gate service management
+│   │   │   ├── GateOperations.tsx             # At-gate service management
+│   │   │   ├── DeicingView.tsx                # De-icing areas view
+│   │   │   └── MetadataView.tsx               # Airport metadata & statistics
 │   │   ├── data/
 │   │   │   └── eham-gates.json                # Real EHAM airport gate data
 │   │   ├── types/
@@ -63,7 +65,7 @@ Ground Equipment Handler/
 ### 1. Develop the Webapp (Fast Iteration with Hot-Reload)
 
 ```powershell
-cd "d:\Projects\GSX-Project\Ground Equipment Handler\webapp"
+cd ".\Ground Equipment Handler\webapp\"
 npm run dev
 ```
 
@@ -75,8 +77,7 @@ npm run dev
 ### 2. Build for MSFS
 
 ```powershell
-# Build both webapp and EFB wrapper (builds directly to Packages folder!)
-cd "d:\Projects\GSX-Project\Ground Equipment Handler\EFB app\PackageSources\TemplateApp"
+cd ".\Ground Equipment Handler\EFB app\PackageSources\TemplateApp"
 npm run build
 
 # That's it! MSFS will load directly from the Packages folder.
@@ -85,7 +86,7 @@ npm run build
 
 Or use the quick rebuild command (cleans first):
 ```powershell
-cd "d:\Projects\GSX-Project\Ground Equipment Handler\EFB app\PackageSources\TemplateApp"
+cd ".\Ground Equipment Handler\EFB app\PackageSources\TemplateApp"
 npm run rebuild
 ```
 
@@ -109,8 +110,9 @@ npm run rebuild
    ├── webapp/                          # React webapp
    │   ├── index.html
    │   └── assets/
-   │       ├── index-[hash].js          # Contains EHAM gates JSON (794 KB)
-   │       └── index-[hash].css         # Styles (10 KB)
+   │       ├── index-[hash].js          # Main app with EHAM gates JSON (~787 KB)
+   │       ├── fontawesome-[hash].js    # Font Awesome icons (separate chunk, ~92 KB)
+   │       └── index-[hash].css         # Styles (~11 KB)
    ├── Assets/                          # EFB assets
    └── GroundEquipmentApp-iframe.js     # EFB wrapper (153 KB)
    ```
@@ -162,8 +164,12 @@ parent.postMessage({
 - ✅ Real EHAM airport gate data (105+ gates)
 - ✅ Gate browsing with filtering and search
 - ✅ Gate grouping (Piers D, E, F, G, H, M)
+- ✅ **De-Icing Areas View** - Browse and navigate to de-icing areas
+- ✅ **Metadata View** - Airport info, statistics, and jetway heights
+- ✅ **Navigation Menu** - Easy switching between Gate List, De-Icing, and Metadata views
 - ✅ Pre-gate options (Follow Me, Show Spot, Warp)
 - ✅ At-gate service management UI
+- ✅ Professional Font Awesome icons (code-split for performance)
 - ✅ Hot-reload development environment
 - ✅ Direct build to MSFS Packages folder
 
@@ -177,6 +183,7 @@ parent.postMessage({
 ## 🛠️ Tech Stack
 
 - **Webapp**: React 18.3.1, TypeScript 5.6.3, Vite 5.4.21
+- **Icons**: Font Awesome 6 (code-split into separate bundle)
 - **EFB**: MSFS SDK, esbuild 0.21.3, SCSS
 - **Communication**: postMessage API
 - **Data**: Real GSX Pro gate configurations (JSON)
@@ -207,9 +214,11 @@ parent.postMessage({
 
 ## 📦 Build Outputs
 
-**Webapp Bundle:** 794 KB (includes all EHAM gate data)
+**Main Bundle:** 794 KB (includes all EHAM data: gates, de-icing, metadata)
+**Font Awesome:** 92 KB (separate chunk, loaded on-demand)
+**Styles:** 17 KB (includes all view styles)
 **EFB Wrapper:** 153 KB (minimal iframe loader)
-**Total Size:** ~950 KB
+**Total Size:** ~1,056 KB
 
 ## 🔗 Related Projects
 

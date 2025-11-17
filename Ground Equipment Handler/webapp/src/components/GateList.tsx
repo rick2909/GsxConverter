@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react';
 import { AirportData, Gate, GateGroup } from '../types/GateData';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Icons } from '../fontawesome';
 import './GateList.css';
 
 interface GateListProps {
   airportData: AirportData;
-  onNavigate: (view: 'gateList' | 'gateSelection' | 'gateOperations') => void;
+  onNavigate: (view: 'gateList' | 'gateSelection' | 'gateOperations' | 'deicing' | 'metadata') => void;
 }
 
 export default function GateList({ airportData, onNavigate }: GateListProps) {
@@ -65,30 +67,46 @@ export default function GateList({ airportData, onNavigate }: GateListProps) {
   return (
     <div className="gate-list">
       <div className="header">
-        <h1>{airportData.airport}</h1>
-        <div className="header-info">
-          <span className="gate-count">{filteredGates.length} gates</span>
-          <span className="version">Version: {airportData.version}</span>
+        <div className="header-left">
+          <h1>{airportData.airport}</h1>
+          <div className="header-info">
+            <span className="gate-count">{filteredGates.length} gates</span>
+            <span className="version">Version: {airportData.version}</span>
+          </div>
+        </div>
+        <div className="header-right">
+          <button className="nav-button active" onClick={() => onNavigate('gateList')}>
+            Gate List
+          </button>
+          <button className="nav-button" onClick={() => onNavigate('deicing')}>
+            De-Icing
+          </button>
+          <button className="nav-button" onClick={() => onNavigate('metadata')}>
+            Metadata
+          </button>
         </div>
       </div>
 
-      {/* Back to Groups button */}
-      {hasGroups && selectedGroupId && (
-        <div className="back-to-groups">
+      {/* Controls row with back button and search */}
+      <div className="controls-row">
+        {/* Back to Groups button */}
+        {hasGroups && selectedGroupId ? (
           <button className="back-button" onClick={handleBackToGroups}>
-            ← Back to Groups
+            <FontAwesomeIcon icon={Icons.BACK} /> Back to Groups
           </button>
-        </div>
-      )}
+        ) : (
+          <div className="spacer"></div>
+        )}
 
-      {/* Search bar */}
-      <div className="search-bar">
-        <input
-          type="text"
-          placeholder="Search by gate ID, name, or airline..."
-          value={filterText}
-          onChange={(e) => setFilterText(e.target.value)}
-        />
+        {/* Search bar */}
+        <div className="search-bar">
+          <input
+            type="text"
+            placeholder="Search by gate ID, name, or airline..."
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+          />
+        </div>
       </div>
 
       {/* GROUPED VIEW */}
@@ -129,6 +147,7 @@ export default function GateList({ airportData, onNavigate }: GateListProps) {
                           <div className="mini-gate-id">{gate.gate_id.toUpperCase()}</div>
                           <div className="mini-gate-badges">
                             <span className={`badge badge-${gateType}`}>
+                              <FontAwesomeIcon icon={gateType === 'jetway' ? Icons.JET : gateType === 'bus' ? Icons.BUS : Icons.WALK} />{' '}
                               {gateType === 'jetway' ? 'Jetway' : gateType === 'bus' ? 'Bus' : 'Walk'}
                             </span>
                             <span className="badge badge-wingspan">{gate.max_wingspan}m</span>
@@ -167,6 +186,7 @@ export default function GateList({ airportData, onNavigate }: GateListProps) {
 
                   <div className="compact-gate-badges">
                     <span className={`badge badge-${gateType}`}>
+                      <FontAwesomeIcon icon={gateType === 'jetway' ? Icons.JET : gateType === 'bus' ? Icons.BUS : Icons.WALK} />{' '}
                       {gateType === 'jetway' ? 'Jetway' : gateType === 'bus' ? 'Bus' : 'Walk'}
                     </span>
                     <span className="badge badge-wingspan">{gate.max_wingspan}m</span>

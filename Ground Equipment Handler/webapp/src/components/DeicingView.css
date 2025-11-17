@@ -1,0 +1,207 @@
+.deicing-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1e1e1e;
+  color: #ffffff;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.deicing-view .header {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.deicing-view .header-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.deicing-view .header h1 {
+  font-size: 32px;
+  margin: 0 0 10px 0;
+  color: #4fc3f7;
+}
+
+.deicing-view .header-info {
+  display: flex;
+  gap: 20px;
+  font-size: 14px;
+  color: #aaaaaa;
+}
+
+.deicing-view .header-right {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.deicing-view .nav-button {
+  padding: 10px 20px;
+  background-color: rgba(79, 195, 247, 0.1);
+  color: #4fc3f7;
+  border: 1px solid #4fc3f7;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.deicing-view .nav-button:hover {
+  background-color: rgba(79, 195, 247, 0.2);
+  transform: translateY(-2px);
+}
+
+.deicing-view .nav-button.active {
+  background-color: #4fc3f7;
+  color: #1e1e1e;
+}
+
+.deicing-view .deice-count {
+  font-weight: 600;
+  color: #66bb6a;
+}
+
+.deicing-view .deicing-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.deicing-view .no-deicing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  background: #2a2a2a;
+  border: 2px dashed #404040;
+  border-radius: 12px;
+  color: #999;
+  font-size: 16px;
+}
+
+.deicing-view .deicing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 16px;
+  padding-bottom: 20px;
+}
+
+.deicing-view .deice-card {
+  background: #2a2a2a;
+  border: 2px solid #333333;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.deicing-view .deice-card:hover {
+  border-color: #4fc3f7;
+  background: #303030;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(79, 195, 247, 0.2);
+}
+
+.deicing-view .deice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #404040;
+}
+
+.deicing-view .deice-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #4fc3f7;
+  font-weight: 600;
+}
+
+.deicing-view .badge-customized {
+  padding: 4px 8px;
+  background: #ff9800;
+  color: #1e1e1e;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.deicing-view .deice-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.deicing-view .info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.deicing-view .info-item .label {
+  color: #999;
+  font-weight: 500;
+}
+
+.deicing-view .info-item .value {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.deicing-view .info-item .value.coords {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+}
+
+.deicing-view .deice-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.deicing-view .action-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.deicing-view .action-btn.show-spot {
+  background: #4fc3f7;
+  color: #1e1e1e;
+}
+
+.deicing-view .action-btn.show-spot:hover {
+  background: #6dd5ff;
+  transform: translateY(-2px);
+}
+
+.deicing-view .action-btn.warp {
+  background: #66bb6a;
+  color: #1e1e1e;
+}
+
+.deicing-view .action-btn.warp:hover {
+  background: #81c784;
+  transform: translateY(-2px);
+}
