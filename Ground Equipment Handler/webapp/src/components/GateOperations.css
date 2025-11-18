@@ -1,0 +1,226 @@
+.gate-operations {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1e1e1e;
+  color: #ffffff;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.gate-operations .operations-header {
+  margin-bottom: 24px;
+}
+
+.gate-operations .back-button {
+  padding: 10px 20px;
+  background-color: rgba(79, 195, 247, 0.1);
+  color: #4fc3f7;
+  border: 1px solid #4fc3f7;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.gate-operations .back-button:hover {
+  background-color: rgba(79, 195, 247, 0.2);
+  transform: translateX(-4px);
+}
+
+.gate-operations .header-content {
+  margin-top: 16px;
+}
+
+.gate-operations .header-content h1 {
+  font-size: 36px;
+  margin: 0 0 8px 0;
+  color: #4fc3f7;
+  font-weight: 700;
+}
+
+.gate-operations .gate-name {
+  font-size: 18px;
+  color: #aaaaaa;
+  margin: 0;
+}
+
+.gate-operations .operations-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-bottom: 20px;
+}
+
+.gate-operations .section {
+  background: #2a2a2a;
+  border: 2px solid #3a3a3a;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.gate-operations .section h2 {
+  font-size: 20px;
+  margin: 0 0 16px 0;
+  color: #4fc3f7;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gate-operations .section h2 .icon {
+  font-size: 24px;
+}
+
+.gate-operations .service-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.gate-operations .service-btn {
+  background: #1e1e1e;
+  border: 2px solid #4fc3f7;
+  border-radius: 10px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #ffffff;
+}
+
+.gate-operations .service-btn:hover {
+  background: #303030;
+  border-color: #6dd5ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(79, 195, 247, 0.3);
+}
+
+.gate-operations .service-btn:active {
+  transform: translateY(0);
+}
+
+.gate-operations .service-btn.pushback {
+  grid-column: span 2;
+  border-color: #66bb6a;
+}
+
+.gate-operations .service-btn.pushback:hover {
+  border-color: #81c784;
+  box-shadow: 0 4px 12px rgba(102, 187, 106, 0.3);
+}
+
+.gate-operations .service-btn .icon {
+  font-size: 32px;
+}
+
+.gate-operations .service-btn .text {
+  font-size: 16px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.gate-operations .jetway-controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.gate-operations .control-btn {
+  flex: 1;
+  min-width: 200px;
+  background: #1e1e1e;
+  border: 2px solid #ff9800;
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #ffffff;
+}
+
+.gate-operations .control-btn:hover {
+  background: #303030;
+  border-color: #ffb74d;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+}
+
+.gate-operations .control-btn:active {
+  transform: translateY(0);
+}
+
+.gate-operations .control-btn .icon {
+  font-size: 28px;
+}
+
+.gate-operations .control-btn .text {
+  font-size: 16px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.gate-operations .reposition-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gate-operations .reposition-btn {
+  background: #1e1e1e;
+  border: 2px solid #9c27b0;
+  border-radius: 10px;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #ffffff;
+}
+
+.gate-operations .reposition-btn:hover {
+  background: #303030;
+  border-color: #ba68c8;
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+}
+
+.gate-operations .reposition-btn:active {
+  transform: translateX(2px);
+}
+
+.gate-operations .reposition-btn.change-gate {
+  border-color: #4fc3f7;
+}
+
+.gate-operations .reposition-btn.change-gate:hover {
+  border-color: #6dd5ff;
+  box-shadow: 0 4px 12px rgba(79, 195, 247, 0.3);
+}
+
+.gate-operations .reposition-btn .icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.gate-operations .reposition-btn .text {
+  font-size: 16px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.gate-operations .reposition-btn .subtitle {
+  font-size: 12px;
+  color: #999999;
+  margin-left: auto;
+}
